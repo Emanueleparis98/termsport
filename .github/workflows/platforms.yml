@@ -1,0 +1,33 @@
+name: Linux and Windows
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ['3.11', '3.13', '3.14']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install test and build dependencies
+        run: python -m pip install ".[dev]" build uv
+      - name: Test application
+        run: python -m pytest -q
+      - name: Build universal release
+        run: python scripts/build-release.py
+      - name: Verify real installer and installed TUI
+        run: python scripts/check-install.py
