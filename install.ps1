@@ -29,7 +29,16 @@ try {
     $TermsportExpected = @((Get-Content -LiteralPath $TermsportChecksums) | ForEach-Object {
         if ($_ -match '^([a-fA-F0-9]{64})\s+(.+)$' -and $Matches[2] -ceq $TermsportName) { $Matches[1] }
     })
-    $TermsportActual = (Get-FileHash -LiteralPath $Wheel -Algorithm SHA256).Hash
+    # .NET works in Windows PowerShell 5.1 and PowerShell 7, without depending
+    # on the optional/autoloaded Get-FileHash cmdlet module.
+    $TermsportHasher = [Security.Cryptography.SHA256]::Create()
+    $TermsportInputFile = [IO.File]::OpenRead($Wheel)
+    try {
+        $TermsportActual = [BitConverter]::ToString($TermsportHasher.ComputeHash($TermsportInputFile)).Replace('-', '')
+    } finally {
+        $TermsportInputFile.Dispose()
+        $TermsportHasher.Dispose()
+    }
     if ($TermsportExpected.Count -ne 1 -or $TermsportActual -ine $TermsportExpected[0]) { throw 'Checksum del pacchetto non valido; installazione annullata.' }
     $TermsportUv = $env:TERMSPORT_UV
     if (-not $TermsportUv) {
@@ -55,7 +64,7 @@ try {
         & $TermsportUv tool update-shell
         if ($LASTEXITCODE -ne 0) { throw 'Aggiornamento PATH non riuscito.' }
     }
-    $TermsportBin = (& $TermsportUv tool dir --bin | Out-String).Trim()
+    $TermsportBin = ((& $TermsportUv tool dir --bin) -join [Environment]::NewLine).Trim()
     & (Join-Path $TermsportBin 'termsport.exe') --version
     if ($LASTEXITCODE -ne 0) { throw 'Verifica del comando termsport non riuscita.' }
     Write-Host 'Installazione completata. Avvia con: termsport'
