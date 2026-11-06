@@ -8,19 +8,14 @@ $TermsportTemp = Join-Path ([IO.Path]::GetTempPath()) ("termsport-" + [Guid]::Ne
 New-Item -ItemType Directory -Path $TermsportTemp | Out-Null
 try {
     if (-not $Wheel) {
-        $TermsportLocalWheels = @(Get-ChildItem -Path $PSScriptRoot -Filter 'termsport-*-py3-none-any.whl' -File)
-        if ($TermsportLocalWheels.Count -eq 1) {
-            $Wheel = $TermsportLocalWheels[0].FullName
-        } else {
-            if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
-                throw 'Scarica wheel e SHA256SUMS dalla release privata accanto a install.ps1, oppure installa GitHub CLI ed esegui gh auth login.'
-            }
-            & gh release download --repo Emanueleparis98/termsport --pattern 'termsport-*-py3-none-any.whl' --pattern SHA256SUMS --dir $TermsportTemp
-            if ($LASTEXITCODE -ne 0) { throw 'Download della release non riuscito. Controlla gh auth status.' }
-            $TermsportWheels = @(Get-ChildItem -Path $TermsportTemp -Filter 'termsport-*-py3-none-any.whl' -File)
-            if ($TermsportWheels.Count -ne 1) { throw 'La release deve contenere un solo pacchetto wheel universale.' }
-            $Wheel = $TermsportWheels[0].FullName
-        }
+        $TermsportBase = 'https://github.com/Emanueleparis98/termsport/releases'
+        $TermsportRelease = Invoke-RestMethod -Uri "$TermsportBase/latest/download/latest.json"
+        $TermsportVersion = [string]$TermsportRelease.version
+        if ($TermsportVersion -notmatch '^\d+\.\d+\.\d+$') { throw 'Versione della release non valida.' }
+        $TermsportWheelName = "termsport-$TermsportVersion-py3-none-any.whl"
+        $Wheel = Join-Path $TermsportTemp $TermsportWheelName
+        Invoke-WebRequest -Uri "$TermsportBase/download/v$TermsportVersion/$TermsportWheelName" -OutFile $Wheel
+        Invoke-WebRequest -Uri "$TermsportBase/download/v$TermsportVersion/SHA256SUMS" -OutFile (Join-Path $TermsportTemp 'SHA256SUMS')
     }
     $Wheel = (Resolve-Path -LiteralPath $Wheel).Path
     $TermsportChecksums = Join-Path (Split-Path -Parent $Wheel) 'SHA256SUMS'

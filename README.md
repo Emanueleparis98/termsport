@@ -1,87 +1,92 @@
 # TermSport
 
-**0.2.0:** installazione come programma da terminale su Linux e Windows.
-Dopo l’installazione basta `termsport` da qualsiasi cartella. Sono incluse
-le correzioni dei player LiveTV della 0.1.1.
+**0.3.0:** repository pubblico e installazione senza account GitHub.
+Sono disponibili installer Linux/Windows, pacchetto Arch e bucket Scoop.
+Dopo l’installazione basta `termsport` da qualsiasi cartella.
 
 Cerca sport, squadre ed eventi, seleziona una fonte e apri la diretta dal terminale.
 Interfaccia Python/Textual ispirata al flusso di lavoro di [Torrra](https://github.com/stabldev/torrra),
 con codice indipendente e senza componenti torrent, Jackett, Prowlarr o Real-Debrid.
 
-## Installazione da release
-
-Il pacchetto `termsport-0.2.0-py3-none-any.whl` è comune a Linux e Windows.
-Gli installer verificano SHA-256, usano [uv](https://docs.astral.sh/uv/guides/tools/)
-per creare l’ambiente isolato e aggiungono il comando al PATH. Se manca, uv viene
-installato dal [sito ufficiale Astral](https://docs.astral.sh/uv/getting-started/installation/).
-Python 3.13 viene gestito automaticamente da uv; il codice supporta Python 3.11–3.14.
-Non si installano pacchetti Python dentro l’ambiente di sistema della distribuzione.
-
-Il repository e le release sono **privati**: occorre un account GitHub autorizzato.
-Per il download automatico serve [GitHub CLI](https://cli.github.com/) con `gh auth login`
-eseguito una volta. In alternativa scarica dal browser autenticato wheel, installer
-del tuo sistema e `SHA256SUMS`, nella stessa cartella.
-
-### Arch Linux / CachyOS
-
-Prerequisiti disponibili nei repository Arch:
+## Installazione rapida — Linux / Ubuntu / Arch
 
 ```sh
-sudo pacman -S --needed uv mpv github-cli
-gh auth login
-gh release download --repo Emanueleparis98/termsport --pattern install.sh --clobber
-sh install.sh
+curl -fsSL https://github.com/Emanueleparis98/termsport/releases/latest/download/install.sh | sh
 termsport
 ```
 
-### Altre distribuzioni Linux
+L’installer pubblico verifica SHA-256, installa [uv](https://docs.astral.sh/uv/guides/tools/)
+se manca e gestisce Python 3.13 in un ambiente isolato. Non richiede account GitHub,
+`gh`, Git o permessi di amministratore. Se il comando non è riconosciuto nel
+terminale già aperto, riaprilo per caricare il PATH aggiornato.
 
-Installa mpv o VLC con il gestore della tua distribuzione. Con GitHub CLI autenticato:
+Per il video installa anche mpv o VLC con il gestore della distribuzione.
+
+## Arch / CachyOS — pacchetto pacman
+
+Dalla release 0.3.0 è disponibile anche il pacchetto nativo, costruito e verificato
+in un ambiente Arch con le dipendenze dei repository ufficiali:
 
 ```sh
-gh release download --repo Emanueleparis98/termsport --pattern install.sh --clobber
-sh install.sh
+curl -fLO https://github.com/Emanueleparis98/termsport/releases/download/v0.3.0/termsport-0.3.0-1-any.pkg.tar.zst
+sudo pacman -U ./termsport-0.3.0-1-any.pkg.tar.zst
 termsport
 ```
 
-Se hai scaricato manualmente i tre file della release, basta `sh install.sh`.
-Non serve una cartella di lavoro specifica per usare il comando dopo l’installazione.
+Il pacchetto viene fornito dal progetto e si installa con `pacman -U`; **non è nel
+repository ufficiale Arch né in AUR**. Sono inclusi anche `PKGBUILD` e l’archivio
+`arch-build` per chi preferisce costruirlo con `makepkg -si`.
 
-### Windows 10 / 11
+Se hai già installato TermSport con uv e vuoi passare a pacman, rimuovi prima
+la copia utente con `uv tool uninstall termsport`, per evitare che preceda
+`/usr/bin/termsport` nel PATH. Basta scegliere uno dei due metodi.
 
-Usa PowerShell, preferibilmente dentro Windows Terminal. Installa GitHub CLI e
-un player, ad esempio VLC. TermSport riconosce anche VLC nella cartella standard
-`Program Files`, senza richiederne l’aggiunta al PATH.
+## Windows — installazione rapida
+
+Da PowerShell:
 
 ```powershell
-gh auth login
-gh release download --repo Emanueleparis98/termsport --pattern install.ps1 --clobber
-powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://github.com/Emanueleparis98/termsport/releases/latest/download/install.ps1 | iex"
 termsport
 ```
 
 L’opzione `ExecutionPolicy` riguarda soltanto quel processo di installazione.
-Se hai scaricato manualmente i tre file della release, esegui solo il comando
-PowerShell dell’installer. Se il terminale già aperto non riconosce `termsport`,
-chiudilo e riaprilo per caricare il PATH aggiornato.
+VLC o mpv è necessario per i video. VLC viene riconosciuto anche nella cartella
+standard `Program Files`, senza aggiungerlo manualmente al PATH.
 
-### Installazione diretta con uv o pipx
+## Windows — Scoop
 
-Avendo già scaricato il wheel:
+Se usi [Scoop](https://scoop.sh/), aggiungi una sola volta il bucket del progetto:
 
-```sh
-uv tool install --python 3.13 ./termsport-0.2.0-py3-none-any.whl
+```powershell
+scoop bucket add termsport https://github.com/Emanueleparis98/termsport
+scoop install termsport/termsport
 termsport
 ```
 
-È supportato anche `pipx install ./termsport-0.2.0-py3-none-any.whl` con Python
-3.11 o successivo. Non occorrono uv o pipx per gli avvii successivi: il comando è
-semplicemente `termsport`.
+Per aggiornare: `scoop update termsport`. Il bucket è mantenuto dal progetto;
+non è un pacchetto già inserito nell’indice ufficiale WinGet.
 
-Per aggiornare ripeti il download e l’installer della nuova release; le impostazioni
-restano nella cartella utente. Per rimuovere il programma: `uv tool uninstall termsport`.
+## Alternativa universale con uv / pipx
 
-Per verificare l’installazione:
+Con uv già presente:
+
+```sh
+uv tool install --python 3.13 git+https://github.com/Emanueleparis98/termsport.git
+termsport
+```
+
+È supportato anche `pipx install git+https://github.com/Emanueleparis98/termsport.git`
+con Python 3.11 o successivo e Git installato. Il wheel della release è comune a
+Linux e Windows. Per installarlo manualmente usa `uv tool install --python 3.13
+./termsport-0.3.0-py3-none-any.whl`.
+
+Per aggiornare l’installazione rapida, riesegui l’installer. Le impostazioni utente
+sono conservate. Per rimuoverla: `uv tool uninstall termsport`.
+
+Gli indici ufficiali apt/Ubuntu, Arch e WinGet seguono procedure di ammissione
+separate: il progetto non dichiara `apt install termsport`, `pacman -S termsport`
+o `winget install termsport` come comandi già disponibili.
 
 ```sh
 termsport --version

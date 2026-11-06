@@ -1,7 +1,6 @@
 #!/bin/sh
 # Install a verified GitHub release into an isolated uv tool environment.
 set -eu
-termsport_script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 termsport_wheel=
 termsport_python=3.13
 termsport_modify_path=1
@@ -17,21 +16,17 @@ done
 termsport_temp=$(mktemp -d)
 trap 'rm -rf "$termsport_temp"' EXIT HUP INT TERM
 if [ -z "$termsport_wheel" ]; then
-    set -- "$termsport_script_dir"/termsport-*-py3-none-any.whl
-    if [ "$#" -eq 1 ] && [ -f "$1" ]; then
-        termsport_wheel=$1
-    else
-        if ! command -v gh >/dev/null 2>&1; then
-            echo 'Scarica wheel e SHA256SUMS dalla release privata accanto a install.sh, oppure installa GitHub CLI ed esegui gh auth login.' >&2
-            exit 2
-        fi
-        gh release download --repo Emanueleparis98/termsport --pattern 'termsport-*-py3-none-any.whl' --pattern SHA256SUMS --dir "$termsport_temp"
-        set -- "$termsport_temp"/termsport-*-py3-none-any.whl
-        if [ "$#" -ne 1 ] || [ ! -f "$1" ]; then
-            echo 'La release deve contenere un solo pacchetto wheel universale.' >&2; exit 2
-        fi
-        termsport_wheel=$1
+    termsport_base=https://github.com/Emanueleparis98/termsport/releases
+    curl --proto '=https' --tlsv1.2 -fsSL "$termsport_base/latest/download/latest.json" -o "$termsport_temp/latest.json"
+    termsport_version=$(sed -n 's/^[[:space:]]*"version":[[:space:]]*"\([0-9.]*\)".*/\1/p' "$termsport_temp/latest.json")
+    case "$termsport_version" in ''|*[!0-9.]*) echo 'Versione della release non valida.' >&2; exit 2 ;; esac
+    if ! printf '%s\n' "$termsport_version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+        echo 'Versione della release non valida.' >&2; exit 2
     fi
+    termsport_wheel_name="termsport-$termsport_version-py3-none-any.whl"
+    curl --proto '=https' --tlsv1.2 -fsSL "$termsport_base/download/v$termsport_version/$termsport_wheel_name" -o "$termsport_temp/$termsport_wheel_name"
+    curl --proto '=https' --tlsv1.2 -fsSL "$termsport_base/download/v$termsport_version/SHA256SUMS" -o "$termsport_temp/SHA256SUMS"
+    termsport_wheel="$termsport_temp/$termsport_wheel_name"
 fi
 termsport_wheel_dir=$(CDPATH= cd -- "$(dirname -- "$termsport_wheel")" && pwd)
 termsport_wheel_name=$(basename -- "$termsport_wheel")
