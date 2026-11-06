@@ -73,34 +73,40 @@ def page_streams(html: str, page_url: str) -> tuple[list[Stream], list[str]]:
     return list(media.values())[:30], list(dict.fromkeys(frames))[:5]
 
 
-async def resolve_page(network, stream: Stream, *, max_pages: int = 8, candidates: list[str] | None = None) -> list[Stream]:
+async def resolve_page(network, stream: Stream, *, max_pages: int = 8, candidates: list[str] | None = None,
+                    timeout: float = 20) -> list[Stream]:
     if stream.kind != "page":
         return [stream]
     queue = [(stream.url, 0)]
     seen = set()
     result: dict[str, Stream] = {}
-    while queue and len(seen) < max_pages:
-        url, depth = queue.pop(0)
-        if url in seen:
-            continue
-        seen.add(url)
-        try:
-            html, final_url = await network.get(url)
-        except FetchError:
-            continue
-        if candidates is not None and final_url not in candidates:
-            candidates.append(final_url)
-        # An embedded endpoint can itself be a manifest without a file extension.
-        if html.lstrip().startswith("#EXTM3U"):
-            result[final_url] = Stream(final_url, "Diretta HLS", "hls", stream.referer)
-            continue
-        if re.search(r"<MPD(?:\s|>)", html[:2000]):
-            result[final_url] = Stream(final_url, "Diretta DASH", "dash", stream.referer)
-            continue
-        media, frames = page_streams(html, final_url)
-        result.update((item.url, item) for item in media)
-        if depth < 2 and not media:
-            queue.extend((url, depth+1) for url in frames if url not in seen)
+    try:
+        async with asyncio.timeout(timeout):
+            while queue and len(seen) < max_pages:
+                url, depth = queue.pop(0)
+                if url in seen:
+                    continue
+                seen.add(url)
+                try:
+                    html, final_url = await network.get(url)
+                except (FetchError, ValueError):
+                    continue
+                if candidates is not None and final_url not in candidates:
+                    candidates.append(final_url)
+                # An embedded endpoint can itself be a manifest without a file extension.
+                if html.lstrip().startswith("#EXTM3U"):
+                    result[final_url] = Stream(final_url, "Diretta HLS", "hls", stream.referer)
+                    continue
+                if re.search(r"<MPD(?:\s|>)", html[:2000]):
+                    result[final_url] = Stream(final_url, "Diretta DASH", "dash", stream.referer)
+                    continue
+                media, frames = page_streams(html, final_url)
+                result.update((item.url, item) for item in media)
+                if depth < 2 and not media:
+                    queue.extend((url, depth+1) for url in frames if url not in seen)
+    except TimeoutError:
+        # Return streams found before the deadline instead of losing the whole resolution.
+        pass
     return list(result.values())
 
 

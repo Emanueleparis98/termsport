@@ -6,7 +6,7 @@ import httpx
 import pytest
 
 from termsport.catalog import load_catalog, parse_fmhy, update_catalog
-from termsport.models import Event, Source, Stream, plain, sport_name, timestamp, web_url
+from termsport.models import Event, Source, SourceResult, Stream, plain, sport_name, timestamp, web_url
 from termsport.net import FetchError, Network
 from termsport.player import Player
 from termsport.providers import fetch_source, livetv_events, structured_events, tim_channels, tim_events, tim_streams
@@ -96,7 +96,7 @@ async def test_http_bounds_status_and_redirects(respx_mock):
             await network.get("https://site.test/private")
         assert "451" in str(failure.value) and "secret" not in str(failure.value)
         respx_mock.get("https://site.test/redirect").respond(status_code=302, headers={"location":"http://127.0.0.1/private"})
-        with pytest.raises(ValueError):
+        with pytest.raises(FetchError, match="reindirizzamento"):
             await network.get("https://site.test/redirect")
     finally:
         await network.close()
@@ -322,3 +322,93 @@ async def test_streamlink_runs_in_the_installed_python_environment(monkeypatch):
     assert result=='https://cdn.test/live.m3u8'
     assert spawn.call_args_list[0].args[:3]==(sys.executable,'-m','streamlink')
     assert '--no-config' in spawn.call_args_list[1].args
+
+
+async def test_network_retries_one_transient_response():
+    calls = []
+    async def api(request):
+        calls.append(request)
+        return httpx.Response(503, text="busy") if len(calls) == 1 else httpx.Response(200, text="ok")
+    client = httpx.AsyncClient(transport=httpx.MockTransport(api))
+    network = Network(client)
+    try:
+        text, _ = await network.get("https://site.test/retry")
+        assert text == "ok" and len(calls) == 2
+    finally:
+        await client.aclose()
+
+
+async def test_search_timeout_keeps_completed_sources(monkeypatch):
+    import termsport.service as module
+    fast = Source("fast", "Fast", "https://fast.example/", adapter="livetv")
+    slow = Source("slow", "Slow", "https://slow.example/", adapter="livetv")
+    async def fetch(network, source):
+        if source.id == "slow":
+            await asyncio.sleep(100)
+        return SourceResult(source, [Event("Alpha Beta", "tennis", source.id, source.name, source.url)])
+    monkeypatch.setattr(module, "fetch_source", fetch)
+    monkeypatch.setattr(module, "SEARCH_TIMEOUT", 0.05)
+    service = SportsService(None, [fast, slow])
+    result = await service.search()
+    assert [item.source.id for item in result.sources] == ["fast"]
+    assert len(result.events) == 1 and result.partial
+
+
+async def test_choices_are_cached_and_concurrent_calls_are_coalesced():
+    class CountingNetwork:
+        def __init__(self):
+            self.calls = 0
+        async def get(self, url):
+            self.calls += 1
+            await asyncio.sleep(0.01)
+            return '<video src="https://cdn.test/live.m3u8"></video>', url
+        async def close(self):
+            pass
+    network = CountingNetwork()
+    source = Source("test", "Test", "https://site.test/")
+    event = Event("Alpha Beta", "tennis", source.id, source.name, "https://site.test/event/1")
+    service = SportsService(network, [source])
+    first, second = await asyncio.gather(service.choices(event), service.choices(event))
+    assert network.calls == 1
+    assert first[0].url == second[0].url == "https://cdn.test/live.m3u8"
+    await service.choices(event)
+    assert network.calls == 1
+
+
+async def test_resolved_streams_are_cached(monkeypatch):
+    import termsport.service as module
+    calls = []
+    async def fake_resolve_page(*args, **kwargs):
+        calls.append(1)
+        return [Stream("https://cdn.test/live.m3u8", kind="hls")]
+    monkeypatch.setattr(module, "resolve_page", fake_resolve_page)
+    service = SportsService(None, [])
+    stream = Stream("https://site.test/player", kind="page")
+    assert (await service.resolve(stream))[0].url == "https://cdn.test/live.m3u8"
+    assert (await service.resolve(stream))[0].url == "https://cdn.test/live.m3u8"
+    assert len(calls) == 1
+
+
+async def test_timstreams_uses_the_endpoint_that_still_works(respx_mock, source):
+    source.adapter = "timstreams"
+    source.url = "https://tim.example/"
+    respx_mock.get("https://tim.example/api/live-upcoming").respond(json={
+        "genres": [{"id": 1, "name": "Tennis"}],
+        "events": [{"name": "Alpha Beta", "url": "alpha", "genre": 1}],
+    })
+    respx_mock.get("https://tim.example/api/channels").respond(status_code=404)
+    network = Network()
+    try:
+        result = await fetch_source(network, source)
+        assert result.status == "ok"
+        assert [event.title for event in result.events] == ["Alpha Beta"]
+    finally:
+        await network.close()
+
+
+async def test_resolve_page_returns_partial_before_its_deadline():
+    class SlowNetwork:
+        async def get(self, url):
+            await asyncio.sleep(10)
+    result = await resolve_page(SlowNetwork(), Stream("https://site.test/player"), timeout=0.01)
+    assert result == []

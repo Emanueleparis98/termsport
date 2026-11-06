@@ -156,10 +156,18 @@ async def fetch_source(network, source: Source) -> SourceResult:
     try:
         if source.adapter == "timstreams":
             import asyncio
-            data, channels = await asyncio.gather(network.json(base_url(source)+"/api/live-upcoming"), network.json(base_url(source)+"/api/channels"))
-            if not isinstance(data, dict) or not isinstance(channels, dict):
-                raise FetchError("Formato API TimStreams cambiato.")
-            events = tim_events(data, source) + tim_channels(channels, source)
+            data, channels = await asyncio.gather(
+                network.json(base_url(source)+"/api/live-upcoming"),
+                network.json(base_url(source)+"/api/channels"),
+                return_exceptions=True,
+            )
+            if not isinstance(data, dict) and not isinstance(channels, dict):
+                raise FetchError("API TimStreams non raggiungibile o formato cambiato.")
+            events = []
+            if isinstance(data, dict):
+                events.extend(tim_events(data, source))
+            if isinstance(channels, dict):
+                events.extend(tim_channels(channels, source))
         else:
             url = base_url(source) + "/enx/" if source.adapter == "livetv" else source.url
             html, final_url = await network.get(url)

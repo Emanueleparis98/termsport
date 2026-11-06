@@ -102,17 +102,27 @@ class StreamsScreen(ModalScreen):
         self.query_one("#stream-table", DataTable).add_columns("Fonte", "Tipo", "Host")
         self.load_choices()
 
+    def on_unmount(self):
+        # Closing the modal must not leave background work running or start a
+        # player after the user has already returned to the event list.
+        self.workers.cancel_group(self, "streams")
+        self.workers.cancel_group(self, "play")
+
     @work(exclusive=True, group="streams")
     async def load_choices(self):
         try:
-            self.streams = await self.app.service.choices(self.event)
+            streams = await self.app.service.choices(self.event)
+            if not self.is_mounted:
+                return
+            self.streams = streams
             table = self.query_one("#stream-table", DataTable)
             for index, stream in enumerate(self.streams):
                 table.add_row(Text(stream.label), stream.kind.upper() if stream.kind != "page" else "Pagina", Text(urlsplit(stream.url).hostname or ""), key=str(index))
             self.query_one("#stream-status", Static).update(f"{len(self.streams)} fonti. Le pagine richiedono un tentativo di estrazione.")
             table.focus()
         except (FetchError, ValueError, TypeError, KeyError, AttributeError):
-            self.query_one("#stream-status", Static).update("Non riesco a leggere i player. Puoi verificare l’evento nel browser.")
+            if self.is_mounted:
+                self.query_one("#stream-status", Static).update("Non riesco a leggere i player. Puoi verificare l’evento nel browser.")
 
     @on(DataTable.RowSelected, "#stream-table")
     @on(Button.Pressed, "#play-stream")
@@ -129,6 +139,8 @@ class StreamsScreen(ModalScreen):
         button.disabled = True
         try:
             resolved = await self.app.service.resolve(stream)
+            if not self.is_mounted:
+                return
             if not resolved:
                 status.update("Nessun flusso diretto estraibile. Il sito può richiedere il browser, un accesso o un player non supportato.")
                 return
@@ -140,13 +152,20 @@ class StreamsScreen(ModalScreen):
                     table.add_row(Text(item.label), item.kind.upper(), Text(urlsplit(item.url).hostname or ""), key=str(index))
                 status.update("Più flussi disponibili: seleziona quello da avviare.")
                 return
+            if not self.is_mounted:
+                return
             await self.app.player.play(resolved[0])
+            if not self.is_mounted:
+                await self.app.player.stop()
+                return
             status.update("Player avviato. Verifica il video nella finestra di riproduzione; S lo interrompe dalla schermata principale.")
             self.app.query_one("#playback", Static).update("● Player attivo · S interrompi")
         except (RuntimeError, FetchError, ValueError, OSError, TimeoutError) as error:
-            status.update(str(error) if isinstance(error, (RuntimeError, FetchError)) else "Impossibile avviare questa fonte. Puoi verificarla nel browser.")
+            if self.is_mounted:
+                status.update(str(error) if isinstance(error, (RuntimeError, FetchError)) else "Impossibile avviare questa fonte. Puoi verificarla nel browser.")
         finally:
-            button.disabled = False
+            if self.is_mounted:
+                button.disabled = False
 
     @on(Button.Pressed, "#event-browser")
     def browser(self):
@@ -267,7 +286,8 @@ class TermSportApp(App):
             self.statuses = {r.source.id: {"ok": "Letto", "browser": "Browser", "unavailable": "Non disponibile"}[r.status] for r in result.sources}
             self.render_events()
             errors = sum(r.status == "unavailable" for r in result.sources)
-            self.query_one("#status", Static).update(f"Aggiornato alle {datetime.now():%H:%M} · {len(result.sources)} fonti consultate · {errors} non disponibili · orari non dichiarati indicati con —")
+            suffix = " · ricerca parziale" if getattr(result, "partial", False) else ""
+            self.query_one("#status", Static).update(f"Aggiornato alle {datetime.now():%H:%M} · {len(result.sources)} fonti consultate · {errors} non disponibili{suffix} · orari non dichiarati indicati con —")
         except asyncio.CancelledError:
             raise
         except Exception:
@@ -338,6 +358,9 @@ class TermSportApp(App):
             selector.set_options([("Fonti integrate", "all"), *[(s.name, s.id) for s in sources]])
             selector.value = current if any(s.id == current for s in sources) else "all"
             self.query_one("#catalog-count", Static).update(f"{len(sources)} siti nel catalogo")
+            clear_cache = getattr(self.service, "clear_cache", None)
+            if clear_cache:
+                clear_cache()
             self.notify("Elenco FMHY aggiornato.")
         except (FetchError, ValueError, OSError):
             self.notify("Non riesco ad aggiornare FMHY. L’elenco precedente resta disponibile.", severity="warning")
