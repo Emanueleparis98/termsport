@@ -1,6 +1,9 @@
 import asyncio
+import ntpath
+import os
 import shutil
-from urllib.parse import urlsplit
+import sys
+from pathlib import Path
 
 from .models import Stream, web_url
 
@@ -11,7 +14,24 @@ class Player:
 
     @staticmethod
     def available() -> str | None:
-        return shutil.which("mpv") or shutil.which("vlc") or shutil.which("ffplay")
+        explicit = os.environ.get("TERMSPORT_PLAYER")
+        if explicit and Path(explicit).is_file():
+            return explicit
+        found = shutil.which("mpv") or shutil.which("vlc") or shutil.which("ffplay")
+        if found:
+            return found
+        if sys.platform == "win32":
+            # VLC's Windows installer does not normally add VLC to PATH.
+            for variable, relative in [
+                ("ProgramFiles", "VideoLAN/VLC/vlc.exe"),
+                ("ProgramFiles(x86)", "VideoLAN/VLC/vlc.exe"),
+                ("LOCALAPPDATA", "Programs/mpv/mpv.exe"),
+            ]:
+                if os.environ.get(variable):
+                    candidate = Path(os.environ[variable]) / relative
+                    if candidate.is_file():
+                        return str(candidate)
+        return None
 
     def command(self, stream: Stream) -> list[str]:
         executable = self.available()
@@ -19,7 +39,7 @@ class Player:
             raise RuntimeError("Installa mpv, VLC o ffplay per riprodurre i flussi.")
         url = web_url(stream.url, allow_local=True)
         referer = web_url(stream.referer) if stream.referer else None
-        name = executable.rsplit("/", 1)[-1].casefold()
+        name = ntpath.basename(executable).casefold()
         if name.startswith("mpv"):
             return [executable, "--no-config", "--force-window=yes", "--title=TermSport", "--cache=yes", "--ytdl=no",
                     *(["--referrer="+referer] if referer else []), "--", url]

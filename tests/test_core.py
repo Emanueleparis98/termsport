@@ -286,3 +286,39 @@ def test_player_uses_arguments_not_shell(monkeypatch):
     assert command[-2]=="--"
     assert "$(touch-test)" in command[-1]
     assert "--referrer=https://site.test/event" in command
+
+
+@pytest.mark.parametrize('executable,expected',[
+    (r'C:\Program Files\mpv\mpv.exe','--referrer=https://site.test/'),
+    (r'C:\Program Files\VideoLAN\VLC\vlc.exe','--http-referrer=https://site.test/'),
+])
+def test_windows_player_paths_select_the_correct_arguments(monkeypatch,executable,expected):
+    monkeypatch.setattr(Player,'available',staticmethod(lambda:executable))
+    command=Player().command(Stream('https://cdn.test/live.m3u8',kind='hls',referer='https://site.test/'))
+    assert command[0]==executable and expected in command
+
+
+def test_windows_vlc_discovery_does_not_require_path(monkeypatch,tmp_path):
+    import termsport.player as module
+    folder=tmp_path/'Program Files'
+    executable=folder/'VideoLAN/VLC/vlc.exe'
+    executable.parent.mkdir(parents=True);executable.touch()
+    monkeypatch.delenv('TERMSPORT_PLAYER',raising=False)
+    monkeypatch.setattr(module.sys,'platform','win32')
+    monkeypatch.setattr(module.shutil,'which',lambda name:None)
+    monkeypatch.setenv('ProgramFiles',str(folder))
+    assert Player.available()==str(executable)
+
+
+async def test_streamlink_runs_in_the_installed_python_environment(monkeypatch):
+    import sys
+    import termsport.resolver as module
+    from unittest.mock import AsyncMock
+    probe=type('Probe',(),{'returncode':0,'wait':AsyncMock(return_value=0)})()
+    process=type('Process',(),{'returncode':0,'communicate':AsyncMock(return_value=(b'https://cdn.test/live.m3u8\n',b''))})()
+    spawn=AsyncMock(side_effect=[probe,process])
+    monkeypatch.setattr(module.asyncio,'create_subprocess_exec',spawn)
+    result=await module.streamlink_url('https://supported.test/watch/1')
+    assert result=='https://cdn.test/live.m3u8'
+    assert spawn.call_args_list[0].args[:3]==(sys.executable,'-m','streamlink')
+    assert '--no-config' in spawn.call_args_list[1].args

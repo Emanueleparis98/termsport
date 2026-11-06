@@ -1,34 +1,96 @@
 # TermSport
 
-**0.1.1:** corretta l’estrazione dei flussi HLS dichiarati con URL `//...`, usati
-anche dai player P2P di LiveTV. I link di condivisione social non vengono più
-seguiti come player e i frame dei banner vengono esclusi. Sul caso LiveTV
-segnalato sono stati decodificati video e audio con mpv in una prova breve reale.
-Dopo l’aggiornamento dei file, chiudi e riapri l’app per caricare il nuovo codice.
+**0.2.0:** installazione come programma da terminale su Linux e Windows.
+Dopo l’installazione basta `termsport` da qualsiasi cartella. Sono incluse
+le correzioni dei player LiveTV della 0.1.1.
 
 Cerca sport, squadre ed eventi, seleziona una fonte e apri la diretta dal terminale.
 Interfaccia Python/Textual ispirata al flusso di lavoro di [Torrra](https://github.com/stabldev/torrra),
 con codice indipendente e senza componenti torrent, Jackett, Prowlarr o Real-Debrid.
 
-## Avvio
+## Installazione da release
 
-Da una nuova installazione:
+Il pacchetto `termsport-0.2.0-py3-none-any.whl` è comune a Linux e Windows.
+Gli installer verificano SHA-256, usano [uv](https://docs.astral.sh/uv/guides/tools/)
+per creare l’ambiente isolato e aggiungono il comando al PATH. Se manca, uv viene
+installato dal [sito ufficiale Astral](https://docs.astral.sh/uv/getting-started/installation/).
+Python 3.13 viene gestito automaticamente da uv; il codice supporta Python 3.11–3.14.
+Non si installano pacchetti Python dentro l’ambiente di sistema della distribuzione.
 
-```bash
-git clone https://github.com/Emanueleparis98/termsport.git
-cd termsport
-./avvia.sh
+Il repository e le release sono **privati**: occorre un account GitHub autorizzato.
+Per il download automatico serve [GitHub CLI](https://cli.github.com/) con `gh auth login`
+eseguito una volta. In alternativa scarica dal browser autenticato wheel, installer
+del tuo sistema e `SHA256SUMS`, nella stessa cartella.
+
+### Arch Linux / CachyOS
+
+Prerequisiti disponibili nei repository Arch:
+
+```sh
+sudo pacman -S --needed uv mpv github-cli
+gh auth login
+gh release download --repo Emanueleparis98/termsport --pattern install.sh --clobber
+sh install.sh
+termsport
 ```
 
-Nella cartella già configurata su questo computer:
+### Altre distribuzioni Linux
 
-```bash
-cd "/home/emanuelep/Scrivania/Progetti AI/TermSPort"
-./avvia.sh
+Installa mpv o VLC con il gestore della tua distribuzione. Con GitHub CLI autenticato:
+
+```sh
+gh release download --repo Emanueleparis98/termsport --pattern install.sh --clobber
+sh install.sh
+termsport
 ```
 
-Python 3.11 o successivo. Il primo avvio crea un ambiente virtuale locale se manca.
-Per il video serve **mpv**, oppure VLC o ffplay. Nel computer di sviluppo mpv è già presente.
+Se hai scaricato manualmente i tre file della release, basta `sh install.sh`.
+Non serve una cartella di lavoro specifica per usare il comando dopo l’installazione.
+
+### Windows 10 / 11
+
+Usa PowerShell, preferibilmente dentro Windows Terminal. Installa GitHub CLI e
+un player, ad esempio VLC. TermSport riconosce anche VLC nella cartella standard
+`Program Files`, senza richiederne l’aggiunta al PATH.
+
+```powershell
+gh auth login
+gh release download --repo Emanueleparis98/termsport --pattern install.ps1 --clobber
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1
+termsport
+```
+
+L’opzione `ExecutionPolicy` riguarda soltanto quel processo di installazione.
+Se hai scaricato manualmente i tre file della release, esegui solo il comando
+PowerShell dell’installer. Se il terminale già aperto non riconosce `termsport`,
+chiudilo e riaprilo per caricare il PATH aggiornato.
+
+### Installazione diretta con uv o pipx
+
+Avendo già scaricato il wheel:
+
+```sh
+uv tool install --python 3.13 ./termsport-0.2.0-py3-none-any.whl
+termsport
+```
+
+È supportato anche `pipx install ./termsport-0.2.0-py3-none-any.whl` con Python
+3.11 o successivo. Non occorrono uv o pipx per gli avvii successivi: il comando è
+semplicemente `termsport`.
+
+Per aggiornare ripeti il download e l’installer della nuova release; le impostazioni
+restano nella cartella utente. Per rimuovere il programma: `uv tool uninstall termsport`.
+
+Per verificare l’installazione:
+
+```sh
+termsport --version
+termsport doctor
+```
+
+## Uso
+
+Per il video serve **mpv**, oppure VLC o ffplay, installato nel sistema.
 La riproduzione apre una finestra video separata, come è normale per un’app da terminale.
 
 La barra di ricerca filtra sport, squadre, competizioni e fonti. Invio su un evento
@@ -72,14 +134,14 @@ calendario di singoli eventi. La copertura dipende dai palinsesti pubblicati dal
 ## CLI
 
 ```bash
-./avvia.sh search calcio
-./avvia.sh search tennis --source livetv --date all
-./avvia.sh search "Inter" --all-sites --json
-./avvia.sh sources motori
-./avvia.sh play ID_EVENTO --source livetv --date all
-./avvia.sh open 'https://esempio.it/diretta.m3u8'
-./avvia.sh refresh-sources
-./avvia.sh doctor
+termsport search calcio
+termsport search tennis --source livetv --date all
+termsport search "Inter" --all-sites --json
+termsport sources motori
+termsport play ID_EVENTO --source livetv --date all
+termsport open 'https://esempio.it/diretta.m3u8'
+termsport refresh-sources
+termsport doctor
 ```
 
 Gli ID delle fonti sono mostrati da `sources`. Per `play` usa fonte e data della
@@ -91,6 +153,9 @@ senza shell, e i contenuti dei siti sono mostrati come testo inerte.
 
 ## Sviluppo e verifica
 
+Il checkout può ancora essere avviato con `./avvia.sh` su Linux. Per uno sviluppo
+portabile crea un ambiente virtuale e installa il progetto con `pip install -e '.[dev]'`.
+
 ```bash
 .venv/bin/python -m pip install -e '.[dev]'
 .venv/bin/python -m pytest
@@ -100,6 +165,11 @@ I test usano rete e player simulati, più prove locali separate quando disponibi
 L’indice viene salvato in `.local` dallo script di avvio, oppure nella cartella
 di configurazione XDG per l’installazione come comando. `TERMSPORT_STATE_DIR`
 permette di scegliere un’altra cartella. Nessuna chiave personale è necessaria.
+
+Per costruire gli asset di release: installa `build`, poi esegui
+`python scripts/build-release.py`. `python scripts/check-install.py` verifica
+l’installer reale, il comando installato e la TUI del wheel in un ambiente temporaneo.
+Gli installer accettano un wheel locale e disabilitano la modifica del PATH per i test.
 
 Codice sorgente: [Emanueleparis98/termsport](https://github.com/Emanueleparis98/termsport).
 Il progetto è autonomo da CineMatch. Ambiente virtuale, cache e pacchetti di build

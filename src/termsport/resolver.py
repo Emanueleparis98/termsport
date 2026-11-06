@@ -3,8 +3,8 @@
 import asyncio
 import json
 import re
-import shutil
-from pathlib import Path
+import sys
+from importlib.util import find_spec
 from urllib.parse import urljoin, urlsplit
 
 from bs4 import BeautifulSoup
@@ -106,15 +106,13 @@ async def resolve_page(network, stream: Stream, *, max_pages: int = 8, candidate
 
 async def streamlink_url(url: str) -> str | None:
     """Optional standard plugins. No authentication or browser bypass flags."""
-    executable = shutil.which("streamlink")
-    if not executable:
-        sibling = Path(__import__("sys").executable).parent / "streamlink"
-        executable = str(sibling) if sibling.exists() else None
-    if not executable:
+    if find_spec("streamlink") is None:
         return None
     # Disable both default config and saved plugin credentials/cookies. Browser
     # automation is not used as an implicit fallback for a protected player.
-    options = [executable, "--no-config", "--no-plugin-cache", "--webbrowser", "false", "--loglevel", "none"]
+    # Use our own environment on Linux and Windows, even when Streamlink's
+    # separate console script is not exposed by uv/pipx or on PATH.
+    options = [sys.executable, "-m", "streamlink", "--no-config", "--no-plugin-cache", "--webbrowser", "false", "--loglevel", "none"]
     probe = await asyncio.create_subprocess_exec(*options, "--can-handle-url-no-redirect", web_url(url),
                                                stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
     try:
