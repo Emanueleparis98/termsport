@@ -57,14 +57,16 @@ def test_catalog_all_sections_and_mirrors():
     assert len(sources) == 10
     assert sources[0].sections == ["Live TV", "Live Sports"]
     assert sources[0].mirrors == ["https://mirror0.test/"]
+    redirected = html.replace('<a href="https://site0.test/">Sito 0</a>', '<a href="/redirect">Sito 0</a><a href="https://site0.test/">2</a>', 1)
+    assert parse_fmhy(redirected)[0].name == "Sito 0"
     with pytest.raises(ValueError):
         parse_fmhy("<html>Schema cambiato</html>")
 
 
 def test_bundled_catalog_is_complete_and_unique():
     sources = load_catalog()
-    assert len(sources) == 80
-    assert len({s.id for s in sources}) == 80
+    assert len(sources) == 81
+    assert len({s.id for s in sources}) == 81
     assert any(s.adapter == "livetv" for s in sources)
     assert any(s.adapter == "timstreams" for s in sources)
     assert all(web_url(s.url) for s in sources)

@@ -46,6 +46,11 @@ def parse_fmhy(html: str) -> list[Source]:
             if not candidates:
                 continue
             label, url = candidates[0]
+            if label.isdigit():
+                # FMHY may hide the primary href behind a relative redirect;
+                # keep its real name rather than calling the source "2".
+                label = next((plain(a.get_text(" ", strip=True)) for a in li.find_all("a")
+                              if plain(a.get_text(" ", strip=True)) and not plain(a.get_text(" ", strip=True)).isdigit()), label)
             host = (urlsplit(url).hostname or "").removeprefix("www.")
             key = host
             if key in sources:

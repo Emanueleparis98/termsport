@@ -27,7 +27,7 @@ senza essere salvate come collegamenti permanenti.
 
 ## Siti e copertura
 
-Il catalogo iniziale contiene **80 fonti** dalle sezioni **Live TV** e **Live Sports** di
+Il catalogo iniziale contiene **81 fonti** dalle sezioni **Live TV** e **Live Sports** di
 [FMHY](https://fmhy.net/video#live-tv-sports), verificate il 6 novembre 2026, con mirror
 raggruppati. **Aggiorna elenco FMHY** recupera l’elenco corrente; se l’aggiornamento
 fallisce resta disponibile quello precedente.

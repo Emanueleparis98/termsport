@@ -1,6 +1,5 @@
 {
   "source": "https://fmhy.net/video#live-tv-sports",
-  "checked": "2026-11-06",
   "sources": [
     {
       "id": "tvcl",
@@ -417,6 +416,17 @@
       "adapter": "generic"
     },
     {
+      "id": "election-run",
+      "name": "election.run",
+      "url": "https://election.run/",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [],
+      "notes": "election.run - Multi-Stream Election Streams / News",
+      "adapter": "generic"
+    },
+    {
       "id": "showroom",
       "name": "SHOWROOM",
       "url": "https://showroom-live.com/",
@@ -471,13 +481,14 @@
       "adapter": "generic"
     },
     {
-      "id": "2",
-      "name": "2",
-      "url": "https://strmfree.st/",
+      "id": "streamfree",
+      "name": "StreamFree",
+      "url": "https://strmfree.pk/",
       "sections": [
         "Live Sports"
       ],
       "mirrors": [
+        "https://strmfree.st/",
         "https://streamfree.top/",
         "https://discord.gg/XkkAQ2PEDz"
       ],
@@ -691,12 +702,12 @@
     {
       "id": "totalsportek",
       "name": "TotalSportek",
-      "url": "https://total-sportekk.st/",
+      "url": "https://totalsport-ek.st/",
       "sections": [
         "Live Sports"
       ],
       "mirrors": [
-        "https://ww1.sportsurge.st/",
+        "https://sportsurges.st/",
         "https://discord.com/invite/mdEsarNMyF"
       ],
       "notes": "TotalSportek or Sportsurge.st /",
@@ -1007,5 +1018,6 @@
       "notes": "Tiz-Cycling - Cycling",
       "adapter": "generic"
     }
-  ]
+  ],
+  "checked": "2026-11-06"
 }
