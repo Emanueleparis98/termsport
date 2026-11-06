@@ -6,12 +6,18 @@ on:
     tags: ['v*']
   pull_request:
   workflow_dispatch:
+    inputs:
+      public_install:
+        description: Verify public release installers and Scoop
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
 jobs:
   test:
+    if: ${{ !inputs.public_install }}
     strategy:
       fail-fast: false
       matrix:
@@ -31,3 +37,51 @@ jobs:
         run: python scripts/build-release.py
       - name: Verify real installer and installed TUI
         run: python scripts/check-install.py
+
+  arch:
+    if: ${{ !inputs.public_install }}
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Install Arch build and runtime dependencies
+        run: pacman -Syu --noconfirm python python-pip python-build python-installer python-hatchling python-textual python-httpx python-beautifulsoup4 python-platformdirs streamlink
+      - name: Build release inputs
+        run: python scripts/build-release.py
+      - name: Build and install the real pacman package
+        run: |
+          useradd -m builder
+          mkdir -p /tmp/termsport-arch
+          termsport_version=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          cp build/arch/PKGBUILD "dist/release/termsport-$termsport_version.tar.gz" /tmp/termsport-arch/
+          chown -R builder:builder /tmp/termsport-arch
+          cd /tmp/termsport-arch
+          runuser -u builder -- makepkg --noconfirm
+          pacman -U --noconfirm termsport-[0-9]*-1-any.pkg.tar.zst
+          termsport --version
+          python "$GITHUB_WORKSPACE/scripts/check-installed-ui.py"
+          mkdir -p "$GITHUB_WORKSPACE/artifacts"
+          cp termsport-[0-9]*-1-any.pkg.tar.zst "$GITHUB_WORKSPACE/artifacts/"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: arch-package
+          path: artifacts/*.pkg.tar.zst
+
+  public:
+    if: ${{ inputs.public_install }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.13'
+      - run: python -m pip install uv
+      - name: Verify anonymous public installer
+        run: python scripts/check-install.py --public
+      - name: Verify Scoop package manager installation
+        if: runner.os == 'Windows'
+        run: ./scripts/check-scoop.ps1
