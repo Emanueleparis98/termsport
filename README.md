@@ -1,6 +1,6 @@
 # TermSport
 
-**TermSport 0.3.0** porta eventi sportivi e dirette in un’app TUI per Linux, macOS
+**TermSport 0.3.1** porta eventi sportivi e dirette in un’app TUI per Linux, macOS
 e Windows. Cerca sport, squadre e competizioni, scegli una fonte e apri la diretta
 dal terminale.
 
@@ -50,12 +50,12 @@ progetto; non è un pacchetto già inserito nell’indice ufficiale WinGet.
 
 ## Arch / CachyOS — pacchetto pacman
 
-Dalla release 0.3.0 è disponibile anche il pacchetto nativo, costruito e verificato
+Dalla release 0.3.1 è disponibile anche il pacchetto nativo, costruito e verificato
 in un ambiente Arch con le dipendenze dei repository ufficiali:
 
 ```sh
-curl -fLO https://github.com/Emanueleparis98/termsport/releases/download/v0.3.0/termsport-0.3.0-1-any.pkg.tar.zst
-sudo pacman -U ./termsport-0.3.0-1-any.pkg.tar.zst
+curl -fLO https://github.com/Emanueleparis98/termsport/releases/download/v0.3.1/termsport-0.3.1-1-any.pkg.tar.zst
+sudo pacman -U ./termsport-0.3.1-1-any.pkg.tar.zst
 termsport
 ```
 
@@ -79,7 +79,7 @@ termsport
 È supportato anche `pipx install git+https://github.com/Emanueleparis98/termsport.git`
 con Python 3.11 o successivo e Git installato. I wheel della release sono comuni
 a Linux, macOS e Windows; per installarli manualmente:
-`uv tool install --python 3.13 ./termsport-0.3.0-py3-none-any.whl`.
+`uv tool install --python 3.13 ./termsport-0.3.1-py3-none-any.whl`.
 
 ## Aggiornamento
 
