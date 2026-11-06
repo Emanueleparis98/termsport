@@ -12,6 +12,16 @@ con codice indipendente e senza componenti torrent, Jackett, Prowlarr o Real-Deb
 
 ## Avvio
 
+Da una nuova installazione:
+
+```bash
+git clone https://github.com/Emanueleparis98/termsport.git
+cd termsport
+./avvia.sh
+```
+
+Nella cartella già configurata su questo computer:
+
 ```bash
 cd "/home/emanuelep/Scrivania/Progetti AI/TermSPort"
 ./avvia.sh
@@ -91,7 +101,6 @@ L’indice viene salvato in `.local` dallo script di avvio, oppure nella cartell
 di configurazione XDG per l’installazione come comando. `TERMSPORT_STATE_DIR`
 permette di scegliere un’altra cartella. Nessuna chiave personale è necessaria.
 
-Il progetto è locale e autonomo da CineMatch. Non è stato creato o pubblicato un
-nuovo repository GitHub. Per associare questa chat alla cartella anche nella barra
-laterale di Codex, aggiungi `TermSPort` come progetto e sposta qui la chat: la sola
-creazione dei file non modifica l’associazione del progetto nell’app.
+Codice sorgente: [Emanueleparis98/termsport](https://github.com/Emanueleparis98/termsport).
+Il progetto è autonomo da CineMatch. Ambiente virtuale, cache e pacchetti di build
+sono esclusi dal repository; vengono creati localmente quando necessari.
