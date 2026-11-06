@@ -42,16 +42,16 @@ def page_streams(html: str, page_url: str) -> tuple[list[Stream], list[str]]:
             media[url] = Stream(url, plain(node.get("label")) or "Video pubblico", kind, page_url)
     # Plain media URLs in player configuration are data, not executable JavaScript.
     for script in soup.find_all("script"):
-        for match in re.finditer(r'''["'](https?://[^\s"'<>]+?\.(?:m3u8|mpd|mp4)(?:\?[^\s"'<>]*)?)["']''', script.get_text().replace("\\/", "/")):
+        for match in re.finditer(r'''["']((?:https?:)?//[^\s"'<>]+?\.(?:m3u8|mpd|mp4)(?:\?[^\s"'<>]*)?)["']''', script.get_text().replace("\\/", "/")):
             try:
                 raw = json.loads('"'+match[1]+'"') if "\\" in match[1] else match[1]
-                url = web_url(raw)
+                url = web_url(urljoin(page_url, raw))
                 media.setdefault(url, Stream(url, "Sorgente player", stream_kind(url), page_url))
             except ValueError:
                 continue
     for frame in soup.select("iframe[src]"):
         raw = frame.get("src", "")
-        if re.search(r"(?:advert|doubleclick|adserver|popunder|recaptcha|(?:[./])ads[./])", raw, re.I):
+        if re.search(r"(?:advert|doubleclick|adserver|popunder|recaptcha|(?:[./])ads?[./]|/getbanner\.)", raw, re.I):
             continue
         if str(frame.get("width", "")) in {"0", "1"} or str(frame.get("height", "")) in {"0", "1"}:
             continue
@@ -59,10 +59,15 @@ def page_streams(html: str, page_url: str) -> tuple[list[Stream], list[str]]:
             frames.append(web_url(urljoin(page_url, raw)))
         except ValueError:
             continue
-    # LiveTV explicitly links public player windows (no arbitrary onclick execution).
-    for match in re.finditer(r'''(?:href=["']|window\.open\(["'])([^"']*webplayer[^"']*)["']''', html, re.I):
+    # Only actual player paths count. A Facebook/Twitter share link may mention
+    # "webplayer" in its query string, but must never be crawled as a player.
+    player_links = [node["href"] for node in soup.select("a[href]")]
+    player_links.extend(match[1] for match in re.finditer(r'''window\.open\(["']([^"']+)["']''', html, re.I))
+    for href in player_links:
         try:
-            frames.append(web_url(urljoin(page_url, match[1].replace("&amp;", "&"))))
+            url = web_url(urljoin(page_url, href.replace("&amp;", "&")))
+            if re.fullmatch(r"/webplayer\d*\.php", urlsplit(url).path, re.I):
+                frames.append(url)
         except ValueError:
             continue
     return list(media.values())[:30], list(dict.fromkeys(frames))[:5]

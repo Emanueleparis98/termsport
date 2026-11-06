@@ -65,3 +65,23 @@ async def test_empty_narrow_layout_and_invalid_date(tmp_path):
         before=service.search.await_count
         app.action_reload();await app.workers.wait_for_complete();await pilot.pause()
         assert service.search.await_count==before
+
+
+async def test_real_service_wrapper_and_protocol_relative_stream_reach_player(tmp_path,respx_mock):
+    from termsport.service import SportsService
+    from termsport.net import Network
+    source=Source('livetv','LiveTV','https://site.test/',adapter='livetv')
+    event=Event('Evento di prova','tennis',source.id,source.name,'https://site.test/event/1')
+    respx_mock.get(event.url).respond(text='<a href="/webplayer2.php?t=tvope&amp;c=123">Play</a>')
+    respx_mock.get('https://site.test/webplayer2.php?t=tvope&c=123').respond(text='<iframe src="https://embed.test/p2p/?id=123"></iframe>')
+    respx_mock.get('https://embed.test/p2p/?id=123').respond(text='<script>window.__p2pPlayer={"stream":"//cdn.test/live.m3u8?cst=test"};</script>')
+    app=TermSportApp(SportsService(Network(),[source]),tmp_path/'sources.json',autoload=False)
+    app.player.play=AsyncMock()
+    async with app.run_test(size=(120,40)) as pilot:
+        app.current_event=event
+        app.action_streams();await app.workers.wait_for_complete();await pilot.pause()
+        assert app.screen.query_one('#stream-table',DataTable).row_count==1
+        await pilot.click('#play-stream');await app.workers.wait_for_complete();await pilot.pause()
+        stream=app.player.play.await_args.args[0]
+        assert stream.kind=='hls' and stream.url=='https://cdn.test/live.m3u8?cst=test'
+        assert stream.referer=='https://embed.test/p2p/?id=123'

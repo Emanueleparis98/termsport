@@ -1,5 +1,11 @@
 # TermSport
 
+**0.1.1:** corretta l’estrazione dei flussi HLS dichiarati con URL `//...`, usati
+anche dai player P2P di LiveTV. I link di condivisione social non vengono più
+seguiti come player e i frame dei banner vengono esclusi. Sul caso LiveTV
+segnalato sono stati decodificati video e audio con mpv in una prova breve reale.
+Dopo l’aggiornamento dei file, chiudi e riapri l’app per caricare il nuovo codice.
+
 Cerca sport, squadre ed eventi, seleziona una fonte e apri la diretta dal terminale.
 Interfaccia Python/Textual ispirata al flusso di lavoro di [Torrra](https://github.com/stabldev/torrra),
 con codice indipendente e senza componenti torrent, Jackett, Prowlarr o Real-Debrid.

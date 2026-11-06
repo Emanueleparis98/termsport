@@ -175,6 +175,40 @@ def test_media_query_escapes_are_decoded_as_data():
     assert media[0].url=='https://cdn.test/live.m3u8?x=1&y=2'
 
 
+def test_protocol_relative_p2p_manifest_is_read_without_running_scripts():
+    html='''<script>window.__p2pPlayer = {"stream":"//cdn.test/hls/live/index.m3u8?cst=public-test-token","tracker":"wss://tracker.test/"};</script>'''
+    media,frames=page_streams(html,'https://embed.test/p2p/?id=123')
+    assert len(media)==1 and media[0].kind=='hls'
+    assert media[0].url=='https://cdn.test/hls/live/index.m3u8?cst=public-test-token'
+    assert media[0].referer=='https://embed.test/p2p/?id=123'
+    assert frames==[]
+
+
+def test_player_links_exclude_share_queries_and_ad_frames():
+    html='''<a href="/webplayer2.php?t=test&amp;c=123">Play</a>
+    <a href="https://facebook.com/share.php?u=https%3A%2F%2Fsite.test%2Fwebplayer2.php">Share</a>
+    <iframe src="//ad.example/getbanner.php?zone_id=1"></iframe>
+    <iframe src="https://embed.test/p2p/?id=123"></iframe>'''
+    _,frames=page_streams(html,'https://site.test/event/123')
+    assert frames==['https://embed.test/p2p/?id=123','https://site.test/webplayer2.php?t=test&c=123']
+
+
+async def test_livetv_wrapper_to_p2p_config_resolves_hls(respx_mock):
+    root='https://site.test/webplayer2.php?t=tvope&c=123'
+    embed='https://embed.test/p2p/?id=123'
+    respx_mock.get(root).respond(text=f'<iframe src="{embed}"></iframe><a href="https://facebook.com/share.php?u=webplayer">Share</a>')
+    respx_mock.get(embed).respond(text='<script>window.__p2pPlayer={"stream":"//cdn.test/hls/live/index.m3u8?cst=test"};</script><iframe src="//ad.example/getbanner.php"></iframe>')
+    network=Network()
+    try:
+        candidates=[]
+        result=await resolve_page(network,Stream(root),candidates=candidates)
+        assert len(result)==1 and result[0].kind=='hls'
+        assert result[0].referer==embed
+        assert candidates==[root,embed]
+        assert len(respx_mock.calls)==2
+    finally:await network.close()
+
+
 async def test_nested_streamlink_fallback_uses_the_actual_player_page(monkeypatch,respx_mock,source):
     import termsport.service as module
     from unittest.mock import AsyncMock
