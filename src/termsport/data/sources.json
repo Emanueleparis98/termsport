@@ -1,0 +1,1011 @@
+{
+  "source": "https://fmhy.net/video#live-tv-sports",
+  "checked": "2026-11-06",
+  "sources": [
+    {
+      "id": "tvcl",
+      "name": "TVCL",
+      "url": "https://www.tvchannellists.com/",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [],
+      "notes": "TVCL - TV Channel Index",
+      "adapter": "generic"
+    },
+    {
+      "id": "ntv",
+      "name": "NTV",
+      "url": "https://ntv.st/",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [
+        "https://ntvs.cx/",
+        "https://discord.gg/uY3ud5gcpW"
+      ],
+      "notes": "NTV , 2 - TV / Sports / Aggregator / Mirrors /",
+      "adapter": "generic"
+    },
+    {
+      "id": "zlive",
+      "name": "zlive",
+      "url": "https://zlive.st/",
+      "sections": [
+        "Live TV",
+        "Live Sports"
+      ],
+      "mirrors": [],
+      "notes": "zlive - TV / Sports",
+      "adapter": "generic"
+    },
+    {
+      "id": "streamsports99",
+      "name": "StreamSports99",
+      "url": "https://streamsports99.ru/live-tv",
+      "sections": [
+        "Live TV",
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://discord.gg/sUwU528aRn",
+        "https://streamsports99.ru/"
+      ],
+      "notes": "StreamSports99 - TV / Sports / Mirrors / Bypass Blocks /",
+      "adapter": "generic"
+    },
+    {
+      "id": "daddylive-tv",
+      "name": "DaddyLive TV",
+      "url": "https://dlive.sx/24-7-channels.php",
+      "sections": [
+        "Live TV",
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://daddylive.pk/",
+        "https://t.me/+8uBUT1-0B741NTll",
+        "https://discord.gg/eJs8FRqt7G",
+        "https://dlive.sx/"
+      ],
+      "notes": "DaddyLive TV , 2 - TV / Sports / /",
+      "adapter": "generic"
+    },
+    {
+      "id": "famelack",
+      "name": "Famelack",
+      "url": "https://famelack.com/",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [],
+      "notes": "Famelack - TV / Sports / Globe Style",
+      "adapter": "generic"
+    },
+    {
+      "id": "easywebtv",
+      "name": "EasyWebTV",
+      "url": "https://zhangboheng.github.io/Easy-Web-TV-M3u8/routes/tv.html",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [
+        "https://iptv-web.app/"
+      ],
+      "notes": "EasyWebTV or IPTV Web - TV / Sports",
+      "adapter": "generic"
+    },
+    {
+      "id": "sportsbite-tv",
+      "name": "SportsBite TV",
+      "url": "https://sportsbite.org/channels",
+      "sections": [
+        "Live TV",
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://sportsbite.org/channels",
+        "https://t.me/+Zo7CoigxqRczMjRk",
+        "https://discord.gg/Qg7uRXWAhU",
+        "https://sportsbite.org/"
+      ],
+      "notes": "SportsBite TV , 2 - TV / Sports / /",
+      "adapter": "generic"
+    },
+    {
+      "id": "titantv",
+      "name": "TitanTV",
+      "url": "https://titantv.com/",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [],
+      "notes": "TitanTV - Live TV Listings / TV Schedule",
+      "adapter": "generic"
+    },
+    {
+      "id": "cinevid",
+      "name": "Cinevid",
+      "url": "https://cinevid.st/channels",
+      "sections": [
+        "Live TV",
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://cinevid.st/events"
+      ],
+      "notes": "Cinevid - TV / Sports",
+      "adapter": "generic"
+    },
+    {
+      "id": "kool-to",
+      "name": "kool.to",
+      "url": "https://kool.ws/",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [
+        "https://huhu.to/",
+        "https://vavoo.to/",
+        "https://oha.to/"
+      ],
+      "notes": "kool.to , huhu.to , vavoo.to or oha.to - TV / Sports / European",
+      "adapter": "generic"
+    },
+    {
+      "id": "live24",
+      "name": "Live24",
+      "url": "https://livelive24.com/",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [
+        "https://livelive24.st/"
+      ],
+      "notes": "Live24 , 2 - TV / Sports",
+      "adapter": "generic"
+    },
+    {
+      "id": "1tube",
+      "name": "1TUbe",
+      "url": "https://www.1tube.org/live-tv",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [],
+      "notes": "1TUbe - TV / Sports",
+      "adapter": "generic"
+    },
+    {
+      "id": "tvnow",
+      "name": "TVNow",
+      "url": "https://tvnow.st/",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [],
+      "notes": "TVNow - TV / Sports",
+      "adapter": "generic"
+    },
+    {
+      "id": "xumo-play",
+      "name": "Xumo Play",
+      "url": "https://play.xumo.com/networks",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [],
+      "notes": "Xumo Play - TV / US Only",
+      "adapter": "generic"
+    },
+    {
+      "id": "damitv",
+      "name": "DamiTV",
+      "url": "https://damitv.st/livetv",
+      "sections": [
+        "Live TV",
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://ondemand.st/",
+        "https://www.90minutes.pro/",
+        "https://ondemand.to/",
+        "https://discord.gg/SyUrxKykh",
+        "https://damitv.st/"
+      ],
+      "notes": "DamiTV or OnDemand , 2 , 3 - TV / Sports /",
+      "adapter": "generic"
+    },
+    {
+      "id": "pluto",
+      "name": "Pluto",
+      "url": "https://pluto.tv/live-tv",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [
+        "https://app-lgwebos.pluto.tv/live-tv"
+      ],
+      "notes": "Pluto , 2 - TV / Sports / US Only",
+      "adapter": "generic"
+    },
+    {
+      "id": "freetvgarden",
+      "name": "FreeTVGarden",
+      "url": "https://freetvgarden.com/",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [],
+      "notes": "FreeTVGarden - TV / Sports / Globe Style",
+      "adapter": "generic"
+    },
+    {
+      "id": "watchott-live",
+      "name": "Watchott Live",
+      "url": "https://iptv.watchott.org/",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [],
+      "notes": "Watchott Live - TV / Sports / PW: FREE-MEDIA",
+      "adapter": "generic"
+    },
+    {
+      "id": "xyzstreams",
+      "name": "xyzstreams",
+      "url": "https://xyzstreams.st/",
+      "sections": [
+        "Live TV",
+        "Live Sports"
+      ],
+      "mirrors": [],
+      "notes": "xyzstreams - TV / Sports",
+      "adapter": "generic"
+    },
+    {
+      "id": "tv-explorer",
+      "name": "TV Explorer",
+      "url": "https://tvexplorer.live/",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [],
+      "notes": "TV Explorer - TV / Sports",
+      "adapter": "generic"
+    },
+    {
+      "id": "tv247us",
+      "name": "TV247US",
+      "url": "https://tvnow247.top/",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [],
+      "notes": "TV247US - TV / Sports",
+      "adapter": "generic"
+    },
+    {
+      "id": "cxtv",
+      "name": "CXtv",
+      "url": "https://www.cxtvlive.com/",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [],
+      "notes": "CXtv - TV / Sports",
+      "adapter": "generic"
+    },
+    {
+      "id": "watchtvs",
+      "name": "WatchTVs",
+      "url": "https://watchtvs.live/",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [],
+      "notes": "WatchTVs - TV",
+      "adapter": "generic"
+    },
+    {
+      "id": "rive",
+      "name": "Rive",
+      "url": "https://www.rivestream.app/iptv",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [
+        "https://rivestream.ru/iptv",
+        "https://discord.com/invite/6xJmJja8fV"
+      ],
+      "notes": "Rive , 2 - TV / Sports /",
+      "adapter": "generic"
+    },
+    {
+      "id": "zerostream",
+      "name": "Zerostream",
+      "url": "https://zerostream.alwaysdata.net/",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [],
+      "notes": "Zerostream - TV",
+      "adapter": "generic"
+    },
+    {
+      "id": "global-free-tv",
+      "name": "Global Free TV",
+      "url": "https://www.globalfreetv.com/",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [
+        "https://discord.com/invite/pPaerCghRN"
+      ],
+      "notes": "Global Free TV - TV /",
+      "adapter": "generic"
+    },
+    {
+      "id": "vipotv",
+      "name": "vipotv",
+      "url": "https://vipotv.com/",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [],
+      "notes": "vipotv - TV / Sports",
+      "adapter": "generic"
+    },
+    {
+      "id": "squidtv",
+      "name": "SquidTV",
+      "url": "https://www.squidtv.net/",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [],
+      "notes": "SquidTV - TV",
+      "adapter": "generic"
+    },
+    {
+      "id": "tvatlas",
+      "name": "TVAtlas",
+      "url": "https://tvatlas.app/",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [],
+      "notes": "TVAtlas - TV",
+      "adapter": "generic"
+    },
+    {
+      "id": "awardstreams",
+      "name": "AwardStreams",
+      "url": "https://awardstreams.pages.dev/",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [
+        "https://x.com/AwardStreamLive",
+        "https://t.me/+i7T1CzmIYL00Mjhh"
+      ],
+      "notes": "AwardStreams - Live Award Shows / /",
+      "adapter": "generic"
+    },
+    {
+      "id": "puffer",
+      "name": "Puffer",
+      "url": "https://puffer.stanford.edu/",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [],
+      "notes": "Puffer - San Fran TV / Requires Sign-Up",
+      "adapter": "generic"
+    },
+    {
+      "id": "tv-jest",
+      "name": "TV.Jest",
+      "url": "https://tv.jest.one/",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [
+        "https://worldnews24.tv/"
+      ],
+      "notes": "TV.Jest or WorldNews24 - News",
+      "adapter": "generic"
+    },
+    {
+      "id": "showroom",
+      "name": "SHOWROOM",
+      "url": "https://showroom-live.com/",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [],
+      "notes": "SHOWROOM - Live Performance Broadcasts",
+      "adapter": "generic"
+    },
+    {
+      "id": "koryo-tv",
+      "name": "Koryo TV",
+      "url": "https://koryo.tv/",
+      "sections": [
+        "Live TV"
+      ],
+      "mirrors": [
+        "https://kcnawatch.us/korea-central-tv-livestream"
+      ],
+      "notes": "Koryo TV or KCNA - North Korean Live TV",
+      "adapter": "generic"
+    },
+    {
+      "id": "timstreams",
+      "name": "TimStreams",
+      "url": "https://tim-streams.com/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://timstreams.co.rw/",
+        "https://discord.gg/fTt4jKWM3u"
+      ],
+      "notes": "TimStreams , 2 - Live Events /",
+      "adapter": "timstreams"
+    },
+    {
+      "id": "streamcorner",
+      "name": "StreamCorner",
+      "url": "https://streamcorner.st/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://streamcorner.foo/",
+        "https://streamcorner.cloud/",
+        "https://streamcorner.fun/",
+        "http://discord.gg/vV6rRFtWhW"
+      ],
+      "notes": "StreamCorner , 2 , 3 , 4 / Status /",
+      "adapter": "generic"
+    },
+    {
+      "id": "2",
+      "name": "2",
+      "url": "https://strmfree.st/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://streamfree.top/",
+        "https://discord.gg/XkkAQ2PEDz"
+      ],
+      "notes": "StreamFree , 2 , 3 / Mirrors /",
+      "adapter": "generic"
+    },
+    {
+      "id": "ppv-st",
+      "name": "PPV.ST",
+      "url": "https://ppv.st/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://ppv.tj/",
+        "https://ppv.rw/",
+        "https://ppv.ms/",
+        "https://ppv.bi/",
+        "https://ppvs.pk/",
+        "https://ppv.ug/",
+        "https://ppv.st/discord"
+      ],
+      "notes": "PPV.ST , 2 , 3 , 4 , 5 , 6 , 7 - Live Events / Mirrors /",
+      "adapter": "generic"
+    },
+    {
+      "id": "aura-sports",
+      "name": "AURA Sports",
+      "url": "https://aurasports.xyz/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://discord.gg/NPuBAJZy7Y"
+      ],
+      "notes": "AURA Sports /",
+      "adapter": "generic"
+    },
+    {
+      "id": "watchsports-su",
+      "name": "WatchSports(su)",
+      "url": "https://watchsports.su/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [],
+      "notes": "WatchSports(su)",
+      "adapter": "generic"
+    },
+    {
+      "id": "strumyk",
+      "name": "Strumyk",
+      "url": "https://strumyk.pk/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://strims24.st/"
+      ],
+      "notes": "Strumyk or Strims24 / Status",
+      "adapter": "generic"
+    },
+    {
+      "id": "roxiestreams",
+      "name": "RoxieStreams",
+      "url": "https://roxiestreams.su/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://roxiestreams.info/",
+        "https://roxiestreams.biz/",
+        "https://discord.gg/NCkz2YNKSE"
+      ],
+      "notes": "RoxieStreams , 2 , 3 / Status /",
+      "adapter": "generic"
+    },
+    {
+      "id": "bintv",
+      "name": "BINTV",
+      "url": "https://www.bintv.cc/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://discord.com/invite/fp3EQjFAJQ"
+      ],
+      "notes": "BINTV / Status /",
+      "adapter": "generic"
+    },
+    {
+      "id": "futbol-x",
+      "name": "Futbol-X",
+      "url": "https://www.futbol-x.xyz/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://www.futbol-x.top/",
+        "https://discord.gg/UzHzerb6XY"
+      ],
+      "notes": "Futbol-X , 2 - Live Events / Mirrors /",
+      "adapter": "generic"
+    },
+    {
+      "id": "c69e399357",
+      "name": "NTV",
+      "url": "https://ntv.cx/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://ntvs.cx/",
+        "https://discord.gg/uY3ud5gcpW"
+      ],
+      "notes": "NTV , 2 /",
+      "adapter": "generic"
+    },
+    {
+      "id": "livetv",
+      "name": "LiveTV",
+      "url": "https://livetv.sx/enx/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [],
+      "notes": "LiveTV",
+      "adapter": "livetv"
+    },
+    {
+      "id": "streameast",
+      "name": "StreamEast",
+      "url": "https://streameast.ga/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://streameast.ph/",
+        "https://www.streameast.cf/",
+        "https://www.streameast.ch/",
+        "https://v2.streameast.ga/",
+        "https://www.streameast.fi/",
+        "https://t.me/streameastmirror"
+      ],
+      "notes": "StreamEast , 2 , 3 , 4 , 5 , 6 / Status / Mirrors /",
+      "adapter": "generic"
+    },
+    {
+      "id": "daddylivehd",
+      "name": "DaddyLiveHD",
+      "url": "https://daddylive.mov/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://daddylive.app/",
+        "https://daddylive.li/",
+        "https://t.me/addlist/khVpZrgJToIxNTJl",
+        "https://discord.gg/qc4jksxk7a"
+      ],
+      "notes": "DaddyLiveHD , 2 , 3 / Mirrors / /",
+      "adapter": "generic"
+    },
+    {
+      "id": "reedstreams",
+      "name": "Reedstreams",
+      "url": "https://reedstreams.to/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://reedstreams.st/",
+        "https://discord.gg/fGfgxcnXUv"
+      ],
+      "notes": "Reedstreams , 2 - Stream Aggregator / Mirrors /",
+      "adapter": "generic"
+    },
+    {
+      "id": "sportsurge",
+      "name": "Sportsurge",
+      "url": "https://v2.sportsurge.net/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [],
+      "notes": "Sportsurge",
+      "adapter": "generic"
+    },
+    {
+      "id": "matchora",
+      "name": "Matchora",
+      "url": "https://matchora.to/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [],
+      "notes": "Matchora",
+      "adapter": "matchora"
+    },
+    {
+      "id": "stability",
+      "name": "Stability",
+      "url": "https://stability.taxidev.me/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [],
+      "notes": "Stability",
+      "adapter": "generic"
+    },
+    {
+      "id": "totalsportek",
+      "name": "TotalSportek",
+      "url": "https://total-sportekk.st/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://ww1.sportsurge.st/",
+        "https://discord.com/invite/mdEsarNMyF"
+      ],
+      "notes": "TotalSportek or Sportsurge.st /",
+      "adapter": "generic"
+    },
+    {
+      "id": "tap4sport",
+      "name": "Tap4Sport",
+      "url": "https://tap4sport.st/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://tap4sport.ci/",
+        "https://tap4sport.pw/"
+      ],
+      "notes": "Tap4Sport , 2 , 3 / Status / TG",
+      "adapter": "generic"
+    },
+    {
+      "id": "cmvtv",
+      "name": "CMVTV",
+      "url": "https://cmvxd.lovable.app/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://t.me/cricketmemesverse"
+      ],
+      "notes": "CMVTV / Status /",
+      "adapter": "generic"
+    },
+    {
+      "id": "fantastic-soda",
+      "name": "Fantastic Soda",
+      "url": "https://fantasticsoda.com/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [],
+      "notes": "Fantastic Soda",
+      "adapter": "generic"
+    },
+    {
+      "id": "fsl",
+      "name": "FSL",
+      "url": "https://freestreams-live1h.pk/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://discord.gg/eXXJzDPchU"
+      ],
+      "notes": "FSL /",
+      "adapter": "generic"
+    },
+    {
+      "id": "streami",
+      "name": "Streami",
+      "url": "https://streamic.st/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [],
+      "notes": "Streami / Status",
+      "adapter": "generic"
+    },
+    {
+      "id": "sportontv",
+      "name": "SportOnTV",
+      "url": "https://sportontv.click/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://discord.gg/YhQPSSMps2"
+      ],
+      "notes": "SportOnTV / / Mirrors",
+      "adapter": "generic"
+    },
+    {
+      "id": "falconstreams",
+      "name": "FalconStreams",
+      "url": "https://falconstreams.app/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://discord.gg/FPgKwtXcYV"
+      ],
+      "notes": "FalconStreams /",
+      "adapter": "falcon"
+    },
+    {
+      "id": "crichd",
+      "name": "CricHD",
+      "url": "https://crichd.at/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [],
+      "notes": "CricHD",
+      "adapter": "generic"
+    },
+    {
+      "id": "thetvapp",
+      "name": "TheTVApp",
+      "url": "https://thetvapp.plus/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [],
+      "notes": "TheTVApp",
+      "adapter": "generic"
+    },
+    {
+      "id": "rerace",
+      "name": "Rerace",
+      "url": "https://www.rerace.net/sports/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [],
+      "notes": "Rerace",
+      "adapter": "generic"
+    },
+    {
+      "id": "mainportal66",
+      "name": "MainPortal66",
+      "url": "https://mainportal66.com/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [],
+      "notes": "MainPortal66",
+      "adapter": "generic"
+    },
+    {
+      "id": "fctv33",
+      "name": "FCTV33",
+      "url": "https://www.fctv33go.hair/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://emmau680.driveraudiencej2zeu49.sbs/",
+        "https://t.me/madplay77_b"
+      ],
+      "notes": "FCTV33 , 2 /",
+      "adapter": "generic"
+    },
+    {
+      "id": "vip-box-sports",
+      "name": "VIP Box Sports",
+      "url": "https://vipleague.me/home",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://olympicweb.me/home",
+        "https://fbstream.is/"
+      ],
+      "notes": "VIP Box Sports , 2 , 3 / Mirrors",
+      "adapter": "generic"
+    },
+    {
+      "id": "fawanews",
+      "name": "FawaNews",
+      "url": "http://www.fawanews.sc/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [],
+      "notes": "FawaNews",
+      "adapter": "generic"
+    },
+    {
+      "id": "baked-live",
+      "name": "Baked.live",
+      "url": "https://baked.live/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [
+        "https://discord.com/invite/baked"
+      ],
+      "notes": "Baked.live - MMA / Wrestling /",
+      "adapter": "generic"
+    },
+    {
+      "id": "guide-tv",
+      "name": "Guide TV",
+      "url": "https://guidetv.live/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [],
+      "notes": "Guide TV - Football",
+      "adapter": "generic"
+    },
+    {
+      "id": "nbamonster",
+      "name": "NBAMonster",
+      "url": "https://nbamonster.com/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [],
+      "notes": "NBAMonster - Basketball",
+      "adapter": "generic"
+    },
+    {
+      "id": "onhockey",
+      "name": "OnHockey",
+      "url": "https://onhockey.tv/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [],
+      "notes": "OnHockey - Hockey",
+      "adapter": "generic"
+    },
+    {
+      "id": "pitsport",
+      "name": "Pitsport",
+      "url": "https://pitsport.st/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [],
+      "notes": "Pitsport - Motorsports",
+      "adapter": "generic"
+    },
+    {
+      "id": "racinglap",
+      "name": "RacingLap",
+      "url": "https://racinglap.net/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [],
+      "notes": "RacingLap - Motorsports",
+      "adapter": "generic"
+    },
+    {
+      "id": "overtakefans",
+      "name": "OvertakeFans",
+      "url": "https://overtakefans.com/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [],
+      "notes": "OvertakeFans - Motorsports",
+      "adapter": "generic"
+    },
+    {
+      "id": "f1-live",
+      "name": "F1 Live",
+      "url": "https://flive.dpdns.org/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [],
+      "notes": "F1 Live - Motorsports",
+      "adapter": "generic"
+    },
+    {
+      "id": "nontongp",
+      "name": "NontonGP",
+      "url": "https://esp32.nontonx.com/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [],
+      "notes": "NontonGP - Motorcycle Racing",
+      "adapter": "generic"
+    },
+    {
+      "id": "r-rugbystreams",
+      "name": "r/rugbystreams",
+      "url": "https://www.reddit.com/r/rugbystreams/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [],
+      "notes": "r/rugbystreams - Rugby",
+      "adapter": "generic"
+    },
+    {
+      "id": "live-snooker-guide",
+      "name": "Live Snooker Guide",
+      "url": "https://redd.it/1ibz2yz",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [],
+      "notes": "Live Snooker Guide - Snooker",
+      "adapter": "generic"
+    },
+    {
+      "id": "tiz-cycling",
+      "name": "Tiz-Cycling",
+      "url": "https://tiz-cycling.tv/",
+      "sections": [
+        "Live Sports"
+      ],
+      "mirrors": [],
+      "notes": "Tiz-Cycling - Cycling",
+      "adapter": "generic"
+    }
+  ]
+}

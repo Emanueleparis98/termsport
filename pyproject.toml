@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "termsport"
+version = "0.1.0"
+description = "Cerca eventi sportivi e apri le dirette dal terminale."
+requires-python = ">=3.11"
+license = "MIT"
+readme = "README.md"
+dependencies = [
+  "textual>=8.2,<9",
+  "httpx>=0.28,<1",
+  "beautifulsoup4>=4.13,<5",
+  "platformdirs>=4.5,<5",
+  "streamlink>=8.6,<9",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=9,<10", "pytest-asyncio>=1.3,<2", "respx>=0.22,<1"]
+
+[project.scripts]
+termsport = "termsport.cli:main"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+pythonpath = ["src"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/termsport"]
