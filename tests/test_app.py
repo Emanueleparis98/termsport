@@ -78,6 +78,7 @@ async def test_real_service_wrapper_and_protocol_relative_stream_reach_player(tm
     respx_mock.get('https://site.test/webplayer2.php?t=tvope&c=123').respond(text='<iframe src="https://embed.test/p2p/?id=123"></iframe>')
     respx_mock.get('https://embed.test/p2p/?id=123').respond(text='<script>window.__p2pPlayer={"stream":"//cdn.test/live.m3u8?cst=test"};</script>')
     app=TermSportApp(SportsService(Network(),[source]),tmp_path/'sources.json',autoload=False)
+    app.player.available=lambda:'/usr/bin/mpv'
     app.player.play=AsyncMock()
     async with app.run_test(size=(120,40)) as pilot:
         app.current_event=event
