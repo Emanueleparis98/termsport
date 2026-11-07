@@ -22,6 +22,7 @@ class FakeService:
 async def test_app_search_filter_sources_and_play(tmp_path,monkeypatch):
     service=FakeService()
     app=TermSportApp(service,tmp_path/'sources.json',autoload=False)
+    app.player.available=lambda:'/usr/bin/mpv'
     app.player.play=AsyncMock()
     app.player.stop=AsyncMock()
     async with app.run_test(size=(140,45)) as pilot:
@@ -45,6 +46,7 @@ async def test_app_search_filter_sources_and_play(tmp_path,monkeypatch):
 async def test_failed_resolution_shows_recovery_without_opening_browser(tmp_path,monkeypatch):
     service=FakeService();service.resolve.return_value=[]
     app=TermSportApp(service,tmp_path/'sources.json',autoload=False)
+    app.player.available=lambda:'/usr/bin/mpv'
     app.player.play=AsyncMock()
     opened=[];monkeypatch.setattr('webbrowser.open',opened.append)
     async with app.run_test(size=(120,40)) as pilot:
