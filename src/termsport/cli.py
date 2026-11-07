@@ -129,11 +129,14 @@ def main(argv=None):
         TermSportApp(SportsService(Network(), sources), catalog_path).run()
         return 0
     if args.command == "doctor":
+        player = Player.available()
         console.print(f"TermSport {__version__} · Python {sys.version.split()[0]}")
-        console.print(f"Player: {Player.available() or 'non trovato (installa mpv)'}", markup=False)
+        console.print(f"Player: {player or 'non trovato'}", markup=False)
+        if not player:
+            console.print("Installa un player: Windows `scoop install mpv` oppure VLC; Linux `sudo pacman -S mpv` / `sudo apt install mpv`.", markup=False)
         console.print(f"Catalogo: {len(sources)} siti · origine {FMHY_URL}", markup=False)
         console.print(f"Impostazioni: {catalog_path.parent}", markup=False)
-        return 0 if Player.available() else 2
+        return 0 if player else 2
     if args.command == "sources":
         found = [s for s in sources if args.query.casefold() in (s.name+" "+s.url+" "+s.notes).casefold()]
         if args.json:

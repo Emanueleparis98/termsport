@@ -1,16 +1,16 @@
 {
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Sports search and live stream playback in your terminal",
   "homepage": "https://github.com/Emanueleparis98/termsport",
   "license": "MIT",
   "depends": "main/uv",
-  "url": "https://github.com/Emanueleparis98/termsport/releases/download/v0.3.1/TermSport-0.3.1-scoop.zip",
-  "hash": "9b5e5e81442704a056dd667eaf1a325e8c323612c128e9d82d6a30eedc56409a",
+  "url": "https://github.com/Emanueleparis98/termsport/releases/download/v0.3.2/TermSport-0.3.2-scoop.zip",
+  "hash": "77c1ec5d55c567299ca2bcd65c5ce62de4b29cee36ca20d94f2e5f983417e424",
   "installer": {
     "script": [
       "& uv venv --python 3.13 \"$dir\\venv\"",
       "if ($LASTEXITCODE -ne 0) { throw 'Cannot create TermSport environment' }",
-      "& uv pip install --python \"$dir\\venv\\Scripts\\python.exe\" \"$dir\\termsport-0.3.1-py3-none-any.whl\"",
+      "& uv pip install --python \"$dir\\venv\\Scripts\\python.exe\" \"$dir\\termsport-0.3.2-py3-none-any.whl\"",
       "if ($LASTEXITCODE -ne 0) { throw 'Cannot install TermSport' }"
     ]
   },

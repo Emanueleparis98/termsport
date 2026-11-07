@@ -20,17 +20,50 @@ class Player:
         found = shutil.which("mpv") or shutil.which("vlc") or shutil.which("ffplay")
         if found:
             return found
+        candidates = []
         if sys.platform == "win32":
-            # VLC's Windows installer does not normally add VLC to PATH.
+            # VLC and mpv installers do not always add themselves to PATH.
             for variable, relative in [
+                ("ProgramFiles", "mpv/mpv.exe"),
+                ("ProgramFiles(x86)", "mpv/mpv.exe"),
+                ("ProgramFiles", "mpv.net/mpvnet.exe"),
+                ("LOCALAPPDATA", "Programs/mpv/mpv.exe"),
+                ("LOCALAPPDATA", "Programs/mpv.net/mpvnet.exe"),
                 ("ProgramFiles", "VideoLAN/VLC/vlc.exe"),
                 ("ProgramFiles(x86)", "VideoLAN/VLC/vlc.exe"),
-                ("LOCALAPPDATA", "Programs/mpv/mpv.exe"),
+                ("USERPROFILE", "scoop/shims/mpv.exe"),
+                ("USERPROFILE", "scoop/apps/mpv/current/mpv.exe"),
+                ("USERPROFILE", "scoop/shims/vlc.exe"),
+                ("USERPROFILE", "scoop/apps/vlc/current/vlc.exe"),
             ]:
                 if os.environ.get(variable):
-                    candidate = Path(os.environ[variable]) / relative
-                    if candidate.is_file():
-                        return str(candidate)
+                    candidates.append(Path(os.environ[variable]) / relative)
+        elif sys.platform == "darwin":
+            candidates.extend([
+                Path("/Applications/VLC.app/Contents/MacOS/VLC"),
+                Path("/Applications/mpv.app/Contents/MacOS/mpv"),
+            ])
+        else:
+            candidates.extend([
+                Path("/snap/bin/mpv"),
+                Path("/snap/bin/vlc"),
+                Path("/var/lib/flatpak/exports/bin/io.mpv.Mpv"),
+                Path("/var/lib/flatpak/exports/bin/org.videolan.VLC"),
+            ])
+            # WSL can launch a Windows player even when no Linux mpv is installed.
+            try:
+                if "microsoft" in Path("/proc/version").read_text(encoding="utf-8", errors="replace").casefold():
+                    candidates.extend([
+                        Path("/mnt/c/Program Files/mpv/mpv.exe"),
+                        Path("/mnt/c/Program Files (x86)/mpv/mpv.exe"),
+                        Path("/mnt/c/Program Files/VideoLAN/VLC/vlc.exe"),
+                        Path("/mnt/c/Program Files (x86)/VideoLAN/VLC/vlc.exe"),
+                    ])
+            except OSError:
+                pass
+        for candidate in candidates:
+            if candidate.is_file():
+                return str(candidate)
         return None
 
     def command(self, stream: Stream) -> list[str]:

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "termsport"
-version = "0.3.1"
+version = "0.3.2"
 description = "Cerca eventi sportivi e apri le dirette dal terminale."
 requires-python = ">=3.11"
 license = "MIT"

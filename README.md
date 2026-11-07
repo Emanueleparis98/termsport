@@ -1,6 +1,6 @@
 # TermSport
 
-**TermSport 0.3.1** porta eventi sportivi e dirette in un’app TUI per Linux, macOS
+**TermSport 0.3.2** porta eventi sportivi e dirette in un’app TUI per Linux, macOS
 e Windows. Cerca sport, squadre e competizioni, scegli una fonte e apri la diretta
 dal terminale.
 
@@ -50,12 +50,12 @@ progetto; non è un pacchetto già inserito nell’indice ufficiale WinGet.
 
 ## Arch / CachyOS — pacchetto pacman
 
-Dalla release 0.3.1 è disponibile anche il pacchetto nativo, costruito e verificato
+Dalla release 0.3.2 è disponibile anche il pacchetto nativo, costruito e verificato
 in un ambiente Arch con le dipendenze dei repository ufficiali:
 
 ```sh
-curl -fLO https://github.com/Emanueleparis98/termsport/releases/download/v0.3.1/termsport-0.3.1-1-any.pkg.tar.zst
-sudo pacman -U ./termsport-0.3.1-1-any.pkg.tar.zst
+curl -fLO https://github.com/Emanueleparis98/termsport/releases/download/v0.3.2/termsport-0.3.2-1-any.pkg.tar.zst
+sudo pacman -U ./termsport-0.3.2-1-any.pkg.tar.zst
 termsport
 ```
 
@@ -79,7 +79,7 @@ termsport
 È supportato anche `pipx install git+https://github.com/Emanueleparis98/termsport.git`
 con Python 3.11 o successivo e Git installato. I wheel della release sono comuni
 a Linux, macOS e Windows; per installarli manualmente:
-`uv tool install --python 3.13 ./termsport-0.3.1-py3-none-any.whl`.
+`uv tool install --python 3.13 ./termsport-0.3.2-py3-none-any.whl`.
 
 ## Aggiornamento
 
@@ -97,6 +97,29 @@ o `winget install termsport` come comandi già disponibili.
 termsport --version
 termsport doctor
 ```
+
+## Se il player non parte
+
+TermSport non include un player video: usa **mpv**, **VLC** o **ffplay** già installati.
+Controlla con:
+
+```sh
+termsport doctor
+```
+
+Se il player non viene trovato:
+
+- **Windows:** `scoop install mpv` oppure installa VLC da videolan.org.
+- **Arch/CachyOS:** `sudo pacman -S mpv`.
+- **Ubuntu/Debian:** `sudo apt install mpv`.
+- **macOS:** `brew install mpv`, oppure installa VLC in `/Applications`.
+- **WSL:** installa mpv/VLC su Windows; TermSport prova anche i percorsi Windows.
+- Se usi un player portatile, imposta `TERMSPORT_PLAYER` con il percorso completo.
+
+Alcune fonti, come Matchora e parte di TimStreams, usano player JavaScript protetti:
+non espongono un file video diretto e il pulsante **Apri evento nel browser** è il
+fallback previsto. TermSport non esegue JavaScript offuscato e non aggira DRM,
+CAPTCHA o accessi.
 
 ## Cosa include
 

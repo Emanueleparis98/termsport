@@ -85,3 +85,21 @@ async def test_real_service_wrapper_and_protocol_relative_stream_reach_player(tm
         stream=app.player.play.await_args.args[0]
         assert stream.kind=='hls' and stream.url=='https://cdn.test/live.m3u8?cst=test'
         assert stream.referer=='https://embed.test/p2p/?id=123'
+
+
+async def test_missing_player_is_reported_before_resolving(tmp_path,monkeypatch):
+    service=FakeService()
+    app=TermSportApp(service,tmp_path/'sources.json',autoload=False)
+    monkeypatch.setattr(app.player,'available',lambda:None)
+    async with app.run_test(size=(120,40)) as pilot:
+        await pilot.pause()
+        assert 'Nessun player' in str(app.query_one('#player-info',Static).render())
+        app.current_event=Event('Test event','tennis','test','Fonte','https://source.test/event/1')
+        app.action_streams()
+        await pilot.pause()
+        await app.workers.wait_for_complete()
+        app.screen.play_selected()
+        await pilot.pause()
+        await app.workers.wait_for_complete()
+        assert service.resolve.await_count == 0
+        assert 'Nessun player' in str(app.screen.query_one('#stream-status',Static).render())

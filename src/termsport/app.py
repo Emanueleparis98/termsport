@@ -134,6 +134,9 @@ class StreamsScreen(ModalScreen):
     @work(exclusive=True, group="play")
     async def resolve_and_play(self, stream: Stream):
         status = self.query_one("#stream-status", Static)
+        if not self.app.player.available():
+            status.update("Nessun player video trovato. Installa mpv o VLC e riprova. Windows: scoop install mpv · Linux: sudo pacman -S mpv oppure sudo apt install mpv")
+            return
         status.update("Verifico la sorgente e preparo il player…")
         button = self.query_one("#play-stream", Button)
         button.disabled = True
@@ -246,6 +249,13 @@ class TermSportApp(App):
         table = self.query_one("#events", DataTable)
         for label, width in [("Stato", 7), ("Ora", 12), ("Sport", 12), ("Evento / canale", 49), ("Fonte", 13)]:
             table.add_column(label, width=width)
+        player = self.player.available()
+        info = self.query_one("#player-info", Static)
+        if player:
+            info.update(f"Player: {Path(player).name}\nNessun torrent")
+        else:
+            info.update("Nessun player video\ninstalla mpv o VLC")
+            self.notify("Nessun player video trovato. Installa mpv o VLC: senza un player i flussi non possono aprirsi.", severity="warning", timeout=15)
         if self.autoload:
             self.load_events()
             self.set_interval(300, self.action_reload)

@@ -412,3 +412,15 @@ async def test_resolve_page_returns_partial_before_its_deadline():
             await asyncio.sleep(10)
     result = await resolve_page(SlowNetwork(), Stream("https://site.test/player"), timeout=0.01)
     assert result == []
+
+
+def test_windows_scoop_mpv_discovery_does_not_require_path(monkeypatch,tmp_path):
+    import termsport.player as module
+    home=tmp_path/'home'
+    executable=home/'scoop/shims/mpv.exe'
+    executable.parent.mkdir(parents=True);executable.touch()
+    monkeypatch.delenv('TERMSPORT_PLAYER',raising=False)
+    monkeypatch.setattr(module.sys,'platform','win32')
+    monkeypatch.setattr(module.shutil,'which',lambda name:None)
+    monkeypatch.setenv('USERPROFILE',str(home))
+    assert Player.available()==str(executable)
