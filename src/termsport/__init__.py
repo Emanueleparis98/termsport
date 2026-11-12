@@ -1,3 +1,3 @@
 """TermSport: ricerca sportiva nel terminale."""
 
-__version__ = "0.3.3"
+__version__ = "0.3.4"

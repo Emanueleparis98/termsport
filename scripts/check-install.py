@@ -21,7 +21,8 @@ def main():
         base = Path(directory)
         installer = ROOT/("install.ps1" if os.name == "nt" else "install.sh")
         env = {**os.environ, "TERMSPORT_UV": uv, "UV_TOOL_DIR": str(base/"tools"),
-               "UV_TOOL_BIN_DIR": str(base/"bin"), "UV_CACHE_DIR": str(base/"cache")}
+               "UV_TOOL_BIN_DIR": str(base/"bin"), "UV_CACHE_DIR": str(base/"cache"),
+               "TERMSPORT_STATE_DIR": str(base/"state")}
         if public:
             manifest = json.load(urllib.request.urlopen("https://github.com/Emanueleparis98/termsport/releases/latest/download/latest.json", timeout=30))
             version = manifest["version"]
