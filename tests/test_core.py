@@ -1,17 +1,44 @@
 import asyncio
-from datetime import date, datetime, timezone
+import json
+import tomllib
+from datetime import date
 from pathlib import Path
 
 import httpx
 import pytest
 
+from termsport import __version__
 from termsport.catalog import load_catalog, parse_fmhy, update_catalog
-from termsport.models import Event, Source, SourceResult, Stream, plain, sport_name, timestamp, web_url
+from termsport.models import (
+    Event,
+    Source,
+    SourceResult,
+    Stream,
+    plain,
+    sport_name,
+    timestamp,
+    web_url,
+)
 from termsport.net import FetchError, Network
 from termsport.player import Player
-from termsport.providers import fetch_source, livetv_events, structured_events, tim_channels, tim_events, tim_streams
-from termsport.resolver import page_streams, resolve_page, stream_kind
+from termsport.providers import (
+    fetch_source,
+    livetv_events,
+    structured_events,
+    tim_channels,
+    tim_events,
+    tim_streams,
+)
+from termsport.resolver import page_streams, resolve_page
 from termsport.service import SportsService
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_release_metadata_matches_package_version():
+    project = tomllib.loads((ROOT/"pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
+    assert __version__ == project
+    assert json.loads((ROOT/"bucket/termsport.json").read_text(encoding="utf-8"))["version"] == project
 
 
 @pytest.fixture
@@ -24,11 +51,17 @@ def test_sports(text, expected):
     assert sport_name(text) == expected
 
 
+@pytest.mark.parametrize("value,expected", [(123, "123"), (None, "Altro"), (["tennis"], "tennis")])
+def test_sport_name_tolerates_non_string_provider_values(value, expected):
+    assert sport_name(value) == expected
+    assert Event("Alpha Beta", value, "test", "Fonte", "https://source.test/event/1").sport == expected
+
+
 def test_untrusted_text_is_inert():
     assert plain("\x1b[31m[red]Evento\x00\n") == "[red]Evento"
 
 
-@pytest.mark.parametrize("url", ["javascript:alert(1)", "file:///etc/passwd", "https://user:secret@site.test/", "http://127.0.0.1/", "http://169.254.169.254/", "http://192.168.1.1/", "https://site.test/a\nx"])
+@pytest.mark.parametrize("url", ["javascript:alert(1)", "file:///etc/passwd", "https://user:secret@site.test/", "http://127.0.0.1/", "http://169.254.169.254/", "http://192.168.1.1/", "https://site.test/a\nx", "https://site.test:abc/", "https://site.test/\x7f"])
 def test_unsafe_urls(url):
     with pytest.raises(ValueError):
         web_url(url)
@@ -39,6 +72,7 @@ def test_time_requires_declared_timezone():
     assert timestamp("2026-11-06T10:30:00Z").tzinfo is not None
     assert timestamp(1793961000000).year == 2026
     assert timestamp("bad") is None
+    assert timestamp(0) is None and timestamp("0") is None
 
 
 def test_filter_alias_and_stable_event_ids(source):
@@ -72,6 +106,16 @@ def test_bundled_catalog_is_complete_and_unique():
     assert all(web_url(s.url) for s in sources)
 
 
+def test_custom_catalog_deduplicates_source_ids(tmp_path):
+    target = tmp_path/"sources.json"
+    target.write_text(json.dumps({"sources": [
+        {"id": "same", "name": "Prima", "url": "https://one.test/"},
+        {"id": "same", "name": "Seconda", "url": "https://two.test/"},
+    ]}), encoding="utf-8")
+    sources = load_catalog(target)
+    assert [source.name for source in sources] == ["Prima"]
+
+
 async def test_failed_catalog_update_preserves_old_file(tmp_path, respx_mock):
     target = tmp_path / "sources.json"
     target.write_text("old")
@@ -81,6 +125,21 @@ async def test_failed_catalog_update_preserves_old_file(tmp_path, respx_mock):
         with pytest.raises(ValueError):
             await update_catalog(network, target)
         assert target.read_text() == "old"
+    finally:
+        await network.close()
+
+
+async def test_catalog_update_uses_utf8_for_non_ascii_sources(tmp_path, respx_mock):
+    rows = "".join(f'<li><a href="https://site{i}.test/">Ω Sport {i}</a></li>' for i in range(10))
+    html = f'<h2 id="live-tv-sports">Live TV / Sports</h2><h3>Live TV</h3><ul>{rows}</ul>'
+    respx_mock.get("https://fmhy.net/video").respond(text=html)
+    target = tmp_path/"sources.json"
+    network = Network()
+    try:
+        sources = await update_catalog(network, target)
+        assert sources[0].name == "Ω Sport 0"
+        assert "Ω Sport 0".encode() in target.read_bytes()
+        assert load_catalog(target)[0].name == "Ω Sport 0"
     finally:
         await network.close()
 
@@ -98,6 +157,17 @@ async def test_http_bounds_status_and_redirects(respx_mock):
         respx_mock.get("https://site.test/redirect").respond(status_code=302, headers={"location":"http://127.0.0.1/private"})
         with pytest.raises(FetchError, match="reindirizzamento"):
             await network.get("https://site.test/redirect")
+        respx_mock.get("https://site.test/downgrade").respond(status_code=302, headers={"location":"http://public.example/"})
+        with pytest.raises(FetchError, match="non sicuro"):
+            await network.get("https://site.test/downgrade")
+    finally:
+        await network.close()
+
+
+async def test_network_user_agent_uses_package_version():
+    network = Network()
+    try:
+        assert network.client.headers["user-agent"] == f"TermSport/{__version__} (+local sports search)"
     finally:
         await network.close()
 
@@ -109,6 +179,13 @@ def test_livetv_extracts_sport_live_and_site_time(source):
     assert events[0].live and events[0].sport == "tennis"
     assert events[0].start is None
     assert events[0].time_label.endswith("ora del sito")
+
+
+def test_livetv_unclosed_parenthesis_does_not_invent_competition(source):
+    html = '<table><tr><td><img alt="Tennis. ATP"/></td><td><a class="live" href="/enx/eventinfo/12_test/">Alpha vs Beta</a><span class="evdesc">15:30 (ATP</span></td></tr></table>'
+    event = livetv_events(html, source, source.url)[0]
+    assert event.competition == ""
+    assert event.time_label == "15:30 · ora del sito"
 
 
 def test_structured_schedule_uses_real_dates(source):
@@ -123,6 +200,11 @@ def test_same_page_jsonld_can_describe_distinct_events(source):
     html='<script type="application/ld+json">[{"@type":"SportsEvent","name":"Alpha Beta","sport":"Tennis"},{"@type":"SportsEvent","name":"Gamma Delta","sport":"Tennis"}]</script>'
     events=structured_events(html,source,source.url)
     assert len(events)==2 and events[0].id!=events[1].id
+
+
+def test_structured_events_ignore_unhashable_jsonld_types(source):
+    html='<script type="application/ld+json">{"@type":[{"unsupported":true}],"name":"Alpha Beta","url":"/event/alpha"}</script>'
+    assert structured_events(html,source,source.url)==[]
 
 
 def test_matchora_metadata_ticker_and_completed_cards(source):
@@ -150,6 +232,7 @@ def test_timstreams_handles_null_events_and_only_sports_channels(source):
     channels = {"genres":[{"id":1,"name":"Sports"},{"id":2,"name":"News"}], "channels":[{"name":"Sport Test","url":"sport","genre":1},{"name":"News","url":"news","genre":2}]}
     result = tim_channels(channels, source)
     assert len(result) == 1 and result[0].kind == "channel"
+    assert tim_channels({"genres":[{"id":1,"name":None}],"channels":[{"name":"Sport","url":"sport","genre":1}]}, source) == []
 
 
 async def test_timstreams_access_required_is_not_bypassed(source, respx_mock):
@@ -163,6 +246,30 @@ async def test_timstreams_access_required_is_not_bypassed(source, respx_mock):
         await network.close()
 
 
+async def test_timstreams_skips_malformed_stream_entries(source, respx_mock):
+    event = Event("Test", "tennis", source.id, source.name, source.url+"watch/test")
+    respx_mock.get("https://sport.example/api/watch/test").respond(json={"item":{"streams":[
+        {"url":123,"name":"Non valido"}, {"url":"https://cdn.example/live.m3u8","name":"Valido"}]}})
+    network = Network()
+    try:
+        result = await tim_streams(network, event, source)
+        assert [stream.url for stream in result] == ["https://cdn.example/live.m3u8"]
+    finally:
+        await network.close()
+
+
+async def test_catalog_provider_failure_does_not_break_other_sources(monkeypatch, source):
+    import termsport.providers as module
+    class FakeNetwork:
+        async def get(self, url):
+            return "<html></html>", source.url
+    def explode(*args, **kwargs):
+        raise IndexError("provider regression")
+    monkeypatch.setattr(module, "structured_events", explode)
+    result = await fetch_source(FakeNetwork(), source)
+    assert result.status == "unavailable" and result.events == []
+
+
 def test_resolver_keeps_media_and_filters_ad_frames():
     html = '<video><source src="/live.m3u8" type="application/x-mpegURL"/></video><iframe src="https://ads.example/banner"></iframe><iframe src="/embed/test"></iframe><script>player({file:"https://cdn.test/live.mpd?sig=x"})</script><a href="javascript:alert(1)">play</a>'
     streams, frames = page_streams(html, "https://site.test/event")
@@ -173,6 +280,11 @@ def test_resolver_keeps_media_and_filters_ad_frames():
 def test_media_query_escapes_are_decoded_as_data():
     media,_=page_streams('<script>p({file:"https://cdn.test/live.m3u8?x=1\\u0026y=2"})</script>','https://site.test/')
     assert media[0].url=='https://cdn.test/live.m3u8?x=1&y=2'
+
+
+def test_uppercase_script_manifest_is_found():
+    media,_=page_streams('<script>p({file:"HTTPS://CDN.TEST/LIVE.M3U8"})</script>','https://site.test/')
+    assert len(media)==1 and media[0].kind=='hls'
 
 
 def test_protocol_relative_p2p_manifest_is_read_without_running_scripts():
@@ -210,8 +322,9 @@ async def test_livetv_wrapper_to_p2p_config_resolves_hls(respx_mock):
 
 
 async def test_nested_streamlink_fallback_uses_the_actual_player_page(monkeypatch,respx_mock,source):
-    import termsport.service as module
     from unittest.mock import AsyncMock
+
+    import termsport.service as module
     respx_mock.get(source.url).respond(text='<iframe src="https://supported.test/embed/1"></iframe>')
     respx_mock.get('https://supported.test/embed/1').respond(text='<html>Custom player</html>')
     extractor=AsyncMock(return_value='https://cdn.test/live.m3u8')
@@ -312,8 +425,9 @@ def test_windows_vlc_discovery_does_not_require_path(monkeypatch,tmp_path):
 
 async def test_streamlink_runs_in_the_installed_python_environment(monkeypatch):
     import sys
-    import termsport.resolver as module
     from unittest.mock import AsyncMock
+
+    import termsport.resolver as module
     probe=type('Probe',(),{'returncode':0,'wait':AsyncMock(return_value=0)})()
     process=type('Process',(),{'returncode':0,'communicate':AsyncMock(return_value=(b'https://cdn.test/live.m3u8\n',b''))})()
     spawn=AsyncMock(side_effect=[probe,process])

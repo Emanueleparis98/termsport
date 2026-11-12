@@ -15,7 +15,7 @@ class Player:
     @staticmethod
     def available() -> str | None:
         explicit = os.environ.get("TERMSPORT_PLAYER")
-        if explicit and Path(explicit).is_file():
+        if explicit and Path(explicit).is_file() and (os.name == "nt" or os.access(explicit, os.X_OK)):
             return explicit
         found = shutil.which("mpv") or shutil.which("vlc") or shutil.which("ffplay")
         if found:
@@ -104,6 +104,9 @@ class Player:
             try:
                 await asyncio.wait_for(self.process.wait(), 3)
             except TimeoutError:
-                self.process.kill()
+                try:
+                    self.process.kill()
+                except ProcessLookupError:
+                    pass
                 await self.process.wait()
         self.process = None

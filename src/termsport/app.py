@@ -4,6 +4,7 @@ import asyncio
 import webbrowser
 from datetime import date, datetime
 from pathlib import Path
+from typing import ClassVar
 from urllib.parse import urlsplit
 
 from rich.text import Text
@@ -12,16 +13,25 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
-from textual.widgets import Button, Checkbox, DataTable, Footer, Input, Label, Select, Static
+from textual.widgets import (
+    Button,
+    Checkbox,
+    DataTable,
+    Footer,
+    Input,
+    Label,
+    Select,
+    Static,
+)
 
 from .catalog import update_catalog
-from .models import SPORTS, Event, Source, Stream, event_sort, plain
+from .models import SPORTS, Event, Source, Stream
 from .net import FetchError
 from .player import Player
 
 
 class SourcesScreen(ModalScreen[str | None]):
-    BINDINGS = [("escape", "dismiss(None)", "Chiudi"), ("b", "browser", "Apri sito")]
+    BINDINGS: ClassVar[list] = [("escape", "dismiss(None)", "Chiudi"), ("b", "browser", "Apri sito")]
 
     def __init__(self, sources: list[Source], statuses: dict[str, str]):
         super().__init__()
@@ -79,7 +89,7 @@ class SourcesScreen(ModalScreen[str | None]):
 
 
 class StreamsScreen(ModalScreen):
-    BINDINGS = [("escape", "dismiss", "Chiudi")]
+    BINDINGS: ClassVar[list] = [("escape", "dismiss", "Chiudi")]
 
     def __init__(self, event: Event):
         super().__init__()
@@ -110,6 +120,8 @@ class StreamsScreen(ModalScreen):
 
     @work(exclusive=True, group="streams")
     async def load_choices(self):
+        if not self.is_mounted:
+            return
         try:
             streams = await self.app.service.choices(self.event)
             if not self.is_mounted:
@@ -133,6 +145,8 @@ class StreamsScreen(ModalScreen):
 
     @work(exclusive=True, group="play")
     async def resolve_and_play(self, stream: Stream):
+        if not self.is_mounted:
+            return
         status = self.query_one("#stream-status", Static)
         if not self.app.player.available():
             status.update("Nessun player video trovato. Installa mpv o VLC e riprova. Windows: scoop install mpv · Linux: sudo pacman -S mpv oppure sudo apt install mpv")
@@ -186,7 +200,7 @@ class TermSportApp(App):
     TITLE = "TermSport"
     SUB_TITLE = "Trova l’evento. Scegli la fonte. Guarda la diretta."
     CSS_PATH = "app.tcss"
-    BINDINGS = [
+    BINDINGS: ClassVar[list] = [
         Binding("ctrl+q", "quit", "Esci"), Binding("slash", "search_focus", "Cerca"),
         Binding("r", "reload", "Ricarica"), Binding("i", "sources", "Siti"),
         Binding("p", "streams", "Flussi"), Binding("b", "browser", "Browser"), Binding("s", "stop", "Stop"),
@@ -271,14 +285,16 @@ class TermSportApp(App):
 
     @work(exclusive=True, group="search")
     async def load_events(self):
-        self.search_generation += 1
-        generation = self.search_generation
+        if not self.is_running:
+            return
         text = self.query_one("#date", Input).value.strip()
         try:
             day = date.fromisoformat(text) if text else None
         except ValueError:
             self.notify("Data non valida. Usa AAAA-MM-GG oppure lascia vuoto.", severity="warning")
             return
+        self.search_generation += 1
+        generation = self.search_generation
         table = self.query_one("#events", DataTable)
         table.loading = True
         source_id = self.query_one("#source", Select).value
@@ -286,31 +302,32 @@ class TermSportApp(App):
         self.query_one("#status", Static).update("Aggiorno le fonti…")
 
         def progress(result, done, total):
-            if generation == self.search_generation:
+            if self.is_running and generation == self.search_generation:
                 self.query_one("#status", Static).update(f"{done}/{total} fonti · {result.source.name} · {len(result.events)} risultati")
         try:
             result = await self.service.search(day=day, source_id=source_id, all_sites=all_sites, progress=progress)
-            if generation != self.search_generation:
+            if not self.is_running or generation != self.search_generation:
                 return
             self.results = result.events
-            self.statuses = {r.source.id: {"ok": "Letto", "browser": "Browser", "unavailable": "Non disponibile"}[r.status] for r in result.sources}
+            self.statuses = {r.source.id: {"ok": "Letto", "browser": "Browser", "unavailable": "Non disponibile"}.get(r.status, "Da verificare") for r in result.sources}
             self.render_events()
             errors = sum(r.status == "unavailable" for r in result.sources)
             suffix = " · ricerca parziale" if getattr(result, "partial", False) else ""
             self.query_one("#status", Static).update(f"Aggiornato alle {datetime.now():%H:%M} · {len(result.sources)} fonti consultate · {errors} non disponibili{suffix} · orari non dichiarati indicati con —")
         except asyncio.CancelledError:
             raise
-        except Exception:
-            self.query_one("#status", Static).update("Ricerca interrotta. Riprova o scegli una singola fonte dall’indice.")
+        except Exception:  # noqa: BLE001 - UI must recover from unexpected provider failure
+            if self.is_running and generation == self.search_generation:
+                self.query_one("#status", Static).update("Ricerca interrotta. Riprova o scegli una singola fonte dall’indice.")
         finally:
-            if generation == self.search_generation:
+            if self.is_running and generation == self.search_generation:
                 table.loading = False
 
     @on(Input.Changed, "#search")
     @on(Select.Changed, "#sport")
     @on(Checkbox.Changed, "#live-only")
     def render_events(self):
-        if not self.is_mounted:
+        if not self.is_running:
             return
         query = self.query_one("#search", Input).value
         sport = self.query_one("#sport", Select).value
@@ -332,6 +349,8 @@ class TermSportApp(App):
         self.show_detail()
 
     def show_detail(self):
+        if not self.is_running:
+            return
         event = self.current_event
         self.query_one("#event-title", Static).update(event.title if event else "Nessun evento selezionato")
         self.query_one("#event-meta", Static).update(" · ".join(filter(None, [event.source_name, event.sport, event.competition, event.time_label])) if event else "Prova un altro sport, svuota la ricerca o consulta l’indice dei siti. Le fonti non disponibili sono indicate nell’indice.")
@@ -360,8 +379,12 @@ class TermSportApp(App):
     @on(Button.Pressed, "#update-catalog")
     @work(exclusive=True, group="catalog")
     async def refresh_catalog(self):
+        if not self.is_running:
+            return
         try:
             sources = await update_catalog(self.service.network, self.catalog_path)
+            if not self.is_running:
+                return
             self.service.sources = sources
             selector = self.query_one("#source", Select)
             current = selector.value
@@ -373,14 +396,20 @@ class TermSportApp(App):
                 clear_cache()
             self.notify("Elenco FMHY aggiornato.")
         except (FetchError, ValueError, OSError):
-            self.notify("Non riesco ad aggiornare FMHY. L’elenco precedente resta disponibile.", severity="warning")
+            if self.is_running:
+                self.notify("Non riesco ad aggiornare FMHY. L’elenco precedente resta disponibile.", severity="warning")
 
     @on(Button.Pressed, "#stop-player")
     @work(exclusive=True, group="stop")
     async def action_stop(self):
         await self.player.stop()
-        self.query_one("#playback", Static).update("Player fermato")
+        if self.is_running:
+            self.query_one("#playback", Static).update("Player fermato")
 
     async def on_unmount(self):
-        await self.player.stop()
-        await self.service.close()
+        for group in ("search", "catalog", "stop"):
+            self.workers.cancel_group(self, group)
+        try:
+            await self.player.stop()
+        finally:
+            await self.service.close()

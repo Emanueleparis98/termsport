@@ -119,6 +119,9 @@ async def command(args, catalog_path, sources, console):
 
 
 def main(argv=None):
+    for handle in (sys.stdout, sys.stderr):
+        if hasattr(handle, "reconfigure"):
+            handle.reconfigure(encoding="utf-8")
     root = parser()
     args = root.parse_args(argv)
     console = Console()

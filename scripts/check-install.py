@@ -64,7 +64,7 @@ asyncio.run(run())
         corrupted.write_bytes(wheel.read_bytes()+b"corrupted")
         (corrupted.parent/"SHA256SUMS").write_text(hashlib.sha256(wheel.read_bytes()).hexdigest()+"  "+wheel.name+"\n")
         bad = command + [wheel_flag, str(corrupted)]
-        result = subprocess.run(bad, env=env, capture_output=True, text=True, timeout=30)
+        result = subprocess.run(bad, check=False, env=env, capture_output=True, text=True, timeout=30)
         assert result.returncode != 0 and "Checksum" in result.stdout+result.stderr
         print("PASS: release installed, termsport command, catalog and installed TUI work; corrupted wheel rejected.")
 

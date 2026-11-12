@@ -73,14 +73,18 @@ def parse_fmhy(html: str) -> list[Source]:
 def load_catalog(path: Path | None = None) -> list[Source]:
     if path and path.exists():
         try:
-            content = path.read_text()
+            content = path.read_text(encoding="utf-8")
             data = json.loads(content)
-            result = [Source(**s) for s in data["sources"]]
+            unique = {}
+            for source in (Source(**item) for item in data["sources"]):
+                if isinstance(source.id, str) and source.id not in unique:
+                    unique[source.id] = source
+            result = list(unique.values())
             if result and all(web_url(s.url) for s in result):
                 return result
         except (ValueError, KeyError, TypeError, OSError):
             pass
-    data = json.loads(files("termsport.data").joinpath("sources.json").read_text())
+    data = json.loads(files("termsport.data").joinpath("sources.json").read_text(encoding="utf-8"))
     return [Source(**s) for s in data["sources"]]
 
 
@@ -89,6 +93,6 @@ async def update_catalog(network, path: Path) -> list[Source]:
     sources = parse_fmhy(html)
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(".tmp")
-    temporary.write_text(json.dumps({"source": FMHY_URL, "sources": [s.to_dict() for s in sources]}, ensure_ascii=False, indent=2))
+    temporary.write_text(json.dumps({"source": FMHY_URL, "sources": [s.to_dict() for s in sources]}, ensure_ascii=False, indent=2), encoding="utf-8")
     temporary.replace(path)
     return sources

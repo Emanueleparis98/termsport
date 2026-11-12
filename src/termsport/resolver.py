@@ -37,12 +37,12 @@ def page_streams(html: str, page_url: str) -> tuple[list[Stream], list[str]]:
         kind = stream_kind(url)
         if node.name != "a" or kind != "page":
             if kind == "page":
-                mime = node.get("type", "").casefold()
+                mime = str(node.get("type") or "").casefold()
                 kind = "hls" if "mpegurl" in mime else "dash" if "dash" in mime else "video"
             media[url] = Stream(url, plain(node.get("label")) or "Video pubblico", kind, page_url)
     # Plain media URLs in player configuration are data, not executable JavaScript.
     for script in soup.find_all("script"):
-        for match in re.finditer(r'''["']((?:https?:)?//[^\s"'<>]+?\.(?:m3u8|mpd|mp4)(?:\?[^\s"'<>]*)?)["']''', script.get_text().replace("\\/", "/")):
+        for match in re.finditer(r'''["']((?:https?:)?//[^\s"'<>]+?\.(?:m3u8|mpd|mp4)(?:\?[^\s"'<>]*)?)["']''', script.get_text().replace("\\/", "/"), re.IGNORECASE):
             try:
                 raw = json.loads('"'+match[1]+'"') if "\\" in match[1] else match[1]
                 url = web_url(urljoin(page_url, raw))
@@ -51,7 +51,9 @@ def page_streams(html: str, page_url: str) -> tuple[list[Stream], list[str]]:
                 continue
     for frame in soup.select("iframe[src]"):
         raw = frame.get("src", "")
-        if re.search(r"(?:advert|doubleclick|adserver|popunder|recaptcha|(?:[./])ads?[./]|/getbanner\.)", raw, re.I):
+        if not isinstance(raw, str):
+            continue
+        if re.search(r"(?:advert|doubleclick|adserver|popunder|recaptcha|(?:[./])ads?[./]|/getbanner\.)", raw, re.IGNORECASE):
             continue
         if str(frame.get("width", "")) in {"0", "1"} or str(frame.get("height", "")) in {"0", "1"}:
             continue
@@ -62,11 +64,13 @@ def page_streams(html: str, page_url: str) -> tuple[list[Stream], list[str]]:
     # Only actual player paths count. A Facebook/Twitter share link may mention
     # "webplayer" in its query string, but must never be crawled as a player.
     player_links = [node["href"] for node in soup.select("a[href]")]
-    player_links.extend(match[1] for match in re.finditer(r'''window\.open\(["']([^"']+)["']''', html, re.I))
+    player_links.extend(match[1] for match in re.finditer(r'''window\.open\(["']([^"']+)["']''', html, re.IGNORECASE))
     for href in player_links:
+        if not isinstance(href, str):
+            continue
         try:
             url = web_url(urljoin(page_url, href.replace("&amp;", "&")))
-            if re.fullmatch(r"/webplayer\d*\.php", urlsplit(url).path, re.I):
+            if re.fullmatch(r"/webplayer\d*\.php", urlsplit(url).path, re.IGNORECASE):
                 frames.append(url)
         except ValueError:
             continue

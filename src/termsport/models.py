@@ -5,9 +5,8 @@ import ipaddress
 import re
 import unicodedata
 from dataclasses import asdict, dataclass, field
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from urllib.parse import urlsplit, urlunsplit
-
 
 SPORTS = {
     "calcio": ("football", "soccer", "calcio", "futbol"),
@@ -40,11 +39,11 @@ def plain(value: object, limit: int = 300) -> str:
     return " ".join("".join(c for c in text if not unicodedata.category(c).startswith("C")).split())[:limit]
 
 
-def normalized(value: str) -> str:
-    return "".join(c for c in unicodedata.normalize("NFKD", value.casefold()) if not unicodedata.combining(c))
+def normalized(value: object) -> str:
+    return "".join(c for c in unicodedata.normalize("NFKD", str(value).casefold()) if not unicodedata.combining(c))
 
 
-def sport_name(value: str) -> str:
+def sport_name(value: object) -> str:
     text = normalized(value)
     # American football must precede the more general football alias.
     if any(term in text for term in SPORTS["football americano"]):
@@ -58,11 +57,17 @@ def sport_name(value: str) -> str:
 
 
 def web_url(value: str, *, allow_local: bool = False) -> str:
+    if not isinstance(value, str) or len(value) > 16000:
+        raise ValueError("Indirizzo non valido.")
+    if any(ord(c) < 32 or ord(c) == 127 for c in value):
+        raise ValueError("Indirizzo non valido.")
     parts = urlsplit(value.strip())
     if parts.scheme not in {"http", "https"} or not parts.hostname or parts.username or parts.password:
         raise ValueError("Serve un indirizzo HTTP/HTTPS senza credenziali incorporate.")
-    if any(ord(c) < 32 for c in value) or len(value) > 16000:
-        raise ValueError("Indirizzo non valido.")
+    try:
+        _ = parts.port
+    except ValueError:
+        raise ValueError("Indirizzo non valido.") from None
     if not allow_local:
         host = parts.hostname.casefold().rstrip(".")
         if host == "localhost" or host.endswith((".localhost", ".local")):
@@ -80,9 +85,11 @@ def timestamp(value: object) -> datetime | None:
     try:
         if isinstance(value, str) and value.isdigit():
             value = int(value)
-        if isinstance(value, (int, float)):
-            return datetime.fromtimestamp(value / 1000 if value > 1e11 else value, timezone.utc)
-        result = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            if value <= 0:
+                return None
+            return datetime.fromtimestamp(value / 1000 if value > 1e11 else value, UTC)
+        result = datetime.fromisoformat(str(value))
         return result if result.tzinfo else None  # Never silently guess a provider timezone.
     except (ValueError, TypeError, OverflowError, OSError):
         return None
@@ -126,14 +133,11 @@ class Event:
     def matches(self, query: str, sport: str = "all", day: date | None = None) -> bool:
         if sport != "all" and normalized(self.sport) != normalized(sport):
             return False
-        text = normalized(" ".join([self.title, self.sport, self.competition, self.source_name]))
-        if not all(word in text for word in normalized(query).split()):
-            # Translate a single Italian/English sport query without mutating event titles.
-            if normalized(query) not in {normalized(self.sport), *SPORTS.get(self.sport, ())}:
-                return False
-        if day and self.start and self.start.astimezone().date() != day:
+        text = normalized(f"{self.title} {self.sport} {self.competition} {self.source_name}")
+        # Translate a single Italian/English sport query without mutating event titles.
+        if not all(word in text for word in normalized(query).split()) and normalized(query) not in {normalized(self.sport), *SPORTS.get(self.sport, ())}:
             return False
-        return True
+        return not (day and self.start and self.start.astimezone().date() != day)
 
     def to_dict(self) -> dict:
         return {**asdict(self), "start": self.start.isoformat() if self.start else None}
@@ -156,4 +160,4 @@ class SourceResult:
 
 
 def event_sort(event: Event):
-    return (not event.live, event.start is None, event.start or datetime.max.replace(tzinfo=timezone.utc), event.title)
+    return (not event.live, event.start is None, event.start or datetime.max.replace(tzinfo=UTC), event.title)

@@ -6,6 +6,7 @@ from urllib.parse import urljoin
 
 import httpx
 
+from . import __version__
 from .models import web_url
 
 
@@ -21,7 +22,7 @@ class Network:
     def __init__(self, client: httpx.AsyncClient | None = None, concurrency: int = 8):
         self.client = client or httpx.AsyncClient(
             timeout=httpx.Timeout(12, connect=5), follow_redirects=False, max_redirects=4,
-            headers={"User-Agent": "TermSport/0.1 (+local sports search)", "Accept": "text/html,application/json"},
+            headers={"User-Agent": f"TermSport/{__version__} (+local sports search)", "Accept": "text/html,application/json"},
         )
         self.owns_client = client is None
         self.semaphore = asyncio.Semaphore(concurrency)
@@ -31,9 +32,12 @@ class Network:
             async with self.client.stream("GET", url, follow_redirects=False) as response:
                 if response.is_redirect:
                     try:
-                        url = web_url(urljoin(url, response.headers.get("location", "")))
+                        target = web_url(urljoin(url, response.headers.get("location", "")))
                     except ValueError:
                         raise FetchError("Il sito ha restituito un reindirizzamento non valido.") from None
+                    if url.startswith("https:") and not target.startswith("https:"):
+                        raise FetchError("Il sito ha reindirizzato verso un collegamento non sicuro.")
+                    url = target
                     continue
                 if response.status_code in (502, 503, 504):
                     raise _Transient()
@@ -74,7 +78,7 @@ class Network:
                     await asyncio.sleep(0.25)
         except _Transient:
             raise FetchError("Sito temporaneamente non disponibile; riprova fra poco.") from None
-        except (httpx.HTTPError, TimeoutError):
+        except (httpx.HTTPError, httpx.InvalidURL, TimeoutError):
             raise FetchError("Sito non raggiungibile o risposta troppo lenta.") from None
         except FetchError:
             raise
