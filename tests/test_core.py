@@ -24,6 +24,7 @@ from termsport.player import Player
 from termsport.providers import (
     fetch_source,
     livetv_events,
+    matchora_stream,
     structured_events,
     tim_channels,
     tim_events,
@@ -270,6 +271,30 @@ async def test_catalog_provider_failure_does_not_break_other_sources(monkeypatch
     assert result.status == "unavailable" and result.events == []
 
 
+async def test_matchora_public_page_pass_resolves_hls(respx_mock):
+    event_url="https://matchora.to/match/ghana-vs-somalia-2475983"
+    embed="https://matchora.to/embed/match/2475983"
+    api="https://matchora.to/api/play/1221178?pp=page-pass"
+    playlist="https://cdn.test/live.m3u8"
+    respx_mock.get(embed).respond(text='<script>var CH="1221178"; var PP="page-pass";</script>')
+    def api_response(request):
+        assert request.headers["referer"] == embed
+        assert request.headers["user-agent"].startswith("Mozilla/5.0")
+        return httpx.Response(200, json={"ready":True,"url":playlist,"pp":"next-pass"})
+    respx_mock.get(api).mock(side_effect=api_response)
+    def playlist_response(request):
+        assert request.headers["referer"] == embed
+        return httpx.Response(200, text="#EXTM3U\n#EXT-X-VERSION:6\n")
+    respx_mock.get(playlist).mock(side_effect=playlist_response)
+    network=Network()
+    try:
+        stream=await matchora_stream(network,event_url)
+        assert stream.url==playlist and stream.kind=="hls"
+        assert stream.referer==embed
+    finally:
+        await network.close()
+
+
 def test_resolver_keeps_media_and_filters_ad_frames():
     html = '<video><source src="/live.m3u8" type="application/x-mpegURL"/></video><iframe src="https://ads.example/banner"></iframe><iframe src="/embed/test"></iframe><script>player({file:"https://cdn.test/live.mpd?sig=x"})</script><a href="javascript:alert(1)">play</a>'
     streams, frames = page_streams(html, "https://site.test/event")
@@ -318,6 +343,33 @@ async def test_livetv_wrapper_to_p2p_config_resolves_hls(respx_mock):
         assert result[0].referer==embed
         assert candidates==[root,embed]
         assert len(respx_mock.calls)==2
+    finally:await network.close()
+
+
+async def test_streamfree_static_player_config_resolves_playlist(respx_mock):
+    page='https://streamfree.top/embed/tennis/skysportstennis1080p'
+    key='https://streamfree.top/get-stream-key/skysportstennis'
+    playlist='https://streamfree.top/live-cdn/skysportstennis1080p/index.m3u8?_e=1794521477&_n=fb7318b473bea248&_t=6N01FyHH3R0uuSjhIDZx_g'
+    html='''<script>
+      const QUALITY = '1080p'; const SOURCE_SUFFIX = '';
+      const _0x = {"1080p": {"_e": 1794521477, "_n": "fb7318b473bea248", "_t": "6N01FyHH3R0uuSjhIDZx_g"}};
+      window.sfFetch('/get-stream-key/' + encodeURIComponent('skysportstennis'));
+    </script>'''
+    respx_mock.get(page).respond(text=html)
+    def key_response(request):
+        assert request.headers["referer"] == page
+        return httpx.Response(200, json={"server_name":"cdn","is_external":False})
+    respx_mock.get(key).mock(side_effect=key_response)
+    def playlist_response(request):
+        assert request.headers["referer"] == page
+        return httpx.Response(200, text="#EXTM3U\n#EXT-X-VERSION:3\n")
+    respx_mock.get(playlist).mock(side_effect=playlist_response)
+    network=Network()
+    try:
+        result=await resolve_page(network,Stream(page))
+        assert len(result)==1
+        assert result[0].kind=='hls' and result[0].url==playlist
+        assert result[0].referer==page
     finally:await network.close()
 
 

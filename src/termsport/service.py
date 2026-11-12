@@ -4,7 +4,7 @@ from datetime import date
 
 from .cache import AsyncTTLCache
 from .models import Event, Source, SourceResult, Stream, event_sort
-from .providers import fetch_source, tim_streams
+from .providers import fetch_source, matchora_stream, tim_streams
 from .resolver import page_streams, resolve_page, streamlink_url
 
 SEARCH_TIMEOUT = 30.0
@@ -63,6 +63,10 @@ class SportsService:
         source = next((s for s in self.sources if s.id == event.source_id), None)
         if source and source.adapter == "timstreams":
             return await tim_streams(self.network, event, source)
+        if source and source.adapter == "matchora":
+            direct = await matchora_stream(self.network, event.url)
+            if direct:
+                return [direct]
         html, final_url = await self.network.get(event.url)
         direct, frames = page_streams(html, final_url)
         return direct + [Stream(url, f"Player {index+1}", referer=event.url) for index, url in enumerate(frames)] or [Stream(event.url, "Pagina evento · prova estrazione o apri nel browser")]
