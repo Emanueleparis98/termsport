@@ -1,13 +1,23 @@
 """Public catalog adapters. A directory entry is not a playback guarantee."""
 
-import json
 import hashlib
+import json
 import re
 from urllib.parse import quote, urljoin, urlsplit
 
 from bs4 import BeautifulSoup
 
-from .models import SPORTS, Event, Source, SourceResult, Stream, plain, sport_name, timestamp, web_url
+from .models import (
+    SPORTS,
+    Event,
+    Source,
+    SourceResult,
+    Stream,
+    plain,
+    sport_name,
+    timestamp,
+    web_url,
+)
 from .net import FetchError
 
 
@@ -32,6 +42,7 @@ def structured_events(html: str, source: Source, page_url: str) -> list[Event]:
                 types = [types]
             if not isinstance(types, list):
                 types = []
+            types = [t for t in types if isinstance(t, str)]
             if any(t in {"SportsEvent", "Event", "BroadcastEvent"} for t in types) and item.get("name"):
                 try:
                     url = web_url(urljoin(page_url, item.get("url") or page_url))
@@ -65,7 +76,7 @@ def structured_events(html: str, source: Source, page_url: str) -> list[Event]:
             # Matchora's duplicated live ticker and completed cards are not a schedule.
             continue
         title = plain(link.get_text(" ", strip=True) or link.get("title"))
-        if not (re.search(r"/(?:eventinfo|events?|matches|match|fixture|game)/[^/?#]+", href, re.I) and len(title) >= 7):
+        if not (re.search(r"/(?:eventinfo|events?|matches|match|fixture|game)/[^/?#]+", href, re.IGNORECASE) and len(title) >= 7):
             continue
         try:
             url = web_url(urljoin(page_url, href))
@@ -116,10 +127,11 @@ def livetv_events(html: str, source: Source, page_url: str) -> list[Event]:
         details = table.select_one(".evdesc") if table else None
         raw = plain(details.get_text(" ", strip=True)) if details else ""
         is_live = "live" in link.get("class", [])
+        sport_label = icon.get("alt") if icon and isinstance(icon.get("alt"), str) else "Altro"
         try:
-            event = Event(title, (icon.get("alt") or "").split(".")[0] if icon else "Altro",
+            event = Event(title, sport_label.split(".")[0] if sport_label else "Altro",
                           source.id, source.name, web_url(urljoin(page_url, link["href"])),
-                          live=is_live, competition=raw[raw.find("(")+1:raw.rfind(")")] if "(" in raw else "",
+                          live=is_live, competition=raw[raw.find("(")+1:raw.rfind(")")] if "(" in raw and ")" in raw else "",
                           time_label=(raw.split("(")[0].strip() + " · ora del sito") if raw else "")
             events.setdefault(event.id, event)
         except ValueError:
@@ -142,7 +154,7 @@ def tim_events(data: dict, source: Source) -> list[Event]:
 
 
 def tim_channels(data: dict, source: Source) -> list[Event]:
-    sports_ids = {str(g["id"]) for g in data.get("genres", []) if isinstance(g, dict) and "sport" in g.get("name", "").casefold()}
+    sports_ids = {str(g["id"]) for g in data.get("genres", []) if isinstance(g, dict) and "sport" in str(g.get("name", "")).casefold()}
     events = []
     for item in (data.get("channels") or []):
         if not isinstance(item, dict) or str(item.get("genre")) not in sports_ids or not item.get("url") or not item.get("name"):
@@ -173,7 +185,7 @@ async def fetch_source(network, source: Source) -> SourceResult:
             html, final_url = await network.get(url)
             events = livetv_events(html, source, final_url) if source.adapter == "livetv" else structured_events(html, source, final_url)
         return SourceResult(source, events, "ok" if events else "browser", "Nessun evento leggibile automaticamente; sito disponibile nel browser." if not events else "")
-    except (FetchError, ValueError, KeyError, TypeError, AttributeError):
+    except Exception:  # noqa: BLE001 - isolate every provider failure
         # Provider failures are isolated. Do not echo arbitrary exception URLs/tokens.
         return SourceResult(source, [], "unavailable", "Sito non raggiungibile, accesso limitato o formato non supportato. Apri nel browser per verificare.")
 
@@ -184,7 +196,7 @@ async def tim_streams(network, event: Event, source: Source) -> list[Stream]:
         if not isinstance(data, dict) or not isinstance(data.get("channels"), list):
             raise FetchError("Formato dei canali cambiato. Verifica la fonte nel browser.")
         slug = urlsplit(event.url).path.rsplit("/", 1)[-1]
-        item = next((i for i in data.get("channels", []) if quote(str(i.get("url", "")), safe="") == slug), {})
+        item = next((i for i in data.get("channels", []) if isinstance(i, dict) and quote(str(i.get("url", "")), safe="") == slug), {})
     else:
         slug = urlsplit(event.url).path.rsplit("/", 1)[-1]
         data = await network.json(base_url(source)+"/api/watch/"+slug)

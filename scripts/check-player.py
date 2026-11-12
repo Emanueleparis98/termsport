@@ -5,7 +5,6 @@ No external video, sports broadcast, account or credentials are used.
 """
 
 import asyncio
-import json
 import shutil
 import subprocess
 import tempfile

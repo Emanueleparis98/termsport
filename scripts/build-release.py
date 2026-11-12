@@ -4,10 +4,10 @@ import json
 import shutil
 import subprocess
 import sys
-from pathlib import Path
 import tarfile
-import zipfile
 import tomllib
+import zipfile
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist" / "release"
