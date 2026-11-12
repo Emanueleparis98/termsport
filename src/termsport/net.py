@@ -27,9 +27,9 @@ class Network:
         self.owns_client = client is None
         self.semaphore = asyncio.Semaphore(concurrency)
 
-    async def _get(self, url: str, limit: int) -> tuple[str, str]:
+    async def _get(self, url: str, limit: int, headers: dict[str, str] | None = None) -> tuple[str, str]:
         for _ in range(5):
-            async with self.client.stream("GET", url, follow_redirects=False) as response:
+            async with self.client.stream("GET", url, follow_redirects=False, headers=headers) as response:
                 if response.is_redirect:
                     try:
                         target = web_url(urljoin(url, response.headers.get("location", "")))
@@ -62,13 +62,13 @@ class Network:
                 return text, web_url(str(response.url))
         raise FetchError("Troppi reindirizzamenti del sito.")
 
-    async def get(self, url: str, *, limit: int = 3_000_000) -> tuple[str, str]:
+    async def get(self, url: str, *, limit: int = 3_000_000, headers: dict[str, str] | None = None) -> tuple[str, str]:
         url = web_url(url)
         try:
             async with self.semaphore, asyncio.timeout(20):
                 for attempt in range(2):
                     try:
-                        return await self._get(url, limit)
+                        return await self._get(url, limit, headers)
                     except _Transient:
                         if attempt:
                             raise
@@ -84,8 +84,8 @@ class Network:
             raise
         raise FetchError("Sito non raggiungibile o risposta troppo lenta.")
 
-    async def json(self, url: str):
-        text, _ = await self.get(url)
+    async def json(self, url: str, *, headers: dict[str, str] | None = None):
+        text, _ = await self.get(url, headers=headers)
         try:
             return json.loads(text)
         except (ValueError, RecursionError):

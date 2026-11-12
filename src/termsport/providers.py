@@ -1,5 +1,6 @@
 """Public catalog adapters. A directory entry is not a playback guarantee."""
 
+import asyncio
 import hashlib
 import json
 import re
@@ -19,6 +20,8 @@ from .models import (
     web_url,
 )
 from .net import FetchError
+
+BROWSER_UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
 
 
 def base_url(source: Source) -> str:
@@ -162,6 +165,48 @@ def tim_channels(data: dict, source: Source) -> list[Event]:
         events.append(Event(item["name"], "Canale sport", source.id, source.name,
                             base_url(source) + "/channel/" + quote(str(item["url"]), safe=""), kind="channel"))
     return events
+
+
+def matchora_embed_url(event_url: str) -> str | None:
+    match = re.search(r"(\d+)/?$", urlsplit(event_url).path)
+    return urljoin(event_url, "/embed/match/"+match[1]) if match else None
+
+
+async def matchora_stream(network, event_url: str) -> Stream | None:
+    """Read Matchora's public embed page pass and player API as data."""
+    embed = matchora_embed_url(event_url)
+    if not embed:
+        return None
+    headers = {"User-Agent": BROWSER_UA, "Referer": event_url}
+    try:
+        html, final_url = await network.get(embed, headers=headers)
+        channel = re.search(r'var CH="([^"]+)"', html)
+        page_pass = re.search(r'var PP="([^"]+)"', html)
+        if not channel or not page_pass:
+            return None
+        embed = final_url
+        api = urljoin(embed, "/api/play/"+quote(channel[1], safe=""))
+        current_pass = page_pass[1]
+        for attempt in range(2):
+            data = await network.json(api+"?pp="+quote(current_pass, safe=""),
+                                      headers={"User-Agent": BROWSER_UA, "Referer": embed})
+            if not isinstance(data, dict):
+                return None
+            current_pass = str(data.get("pp") or current_pass)
+            candidate = data.get("url")
+            if isinstance(candidate, str):
+                try:
+                    url = web_url(urljoin(embed, candidate))
+                    playlist, _ = await network.get(url, headers={"User-Agent": BROWSER_UA, "Referer": embed}, limit=2_000_000)
+                    if playlist.lstrip().startswith("#EXTM3U"):
+                        return Stream(url, "HLS Matchora", "hls", embed)
+                except (FetchError, ValueError):
+                    pass
+            if attempt == 0:
+                await asyncio.sleep(1.2)
+    except (FetchError, ValueError, TypeError, AttributeError):
+        return None
+    return None
 
 
 async def fetch_source(network, source: Source) -> SourceResult:

@@ -5,7 +5,7 @@ import json
 import re
 import sys
 from importlib.util import find_spec
-from urllib.parse import urljoin, urlsplit
+from urllib.parse import quote, unquote, urlencode, urljoin, urlsplit
 
 from bs4 import BeautifulSoup
 
@@ -22,6 +22,67 @@ def stream_kind(url: str) -> str:
     if path.endswith((".mp4", ".webm", ".mkv", ".ts", ".m4v")):
         return "video"
     return "page"
+
+
+async def streamfree_url(network, page_url: str, html: str) -> Stream | None:
+    """Read StreamFree's public player config without executing JavaScript."""
+    if "get-stream-key/" not in html:
+        return None
+    path = urlsplit(page_url).path.rstrip("/")
+    variant = unquote(path.rsplit("/", 1)[-1])
+    if not variant:
+        return None
+    quality_match = re.search(r"const\s+QUALITY\s*=\s*['\"]([^'\"]+)['\"]", html)
+    quality = quality_match.group(1) if quality_match else ""
+    suffix_match = re.search(r"const\s+SOURCE_SUFFIX\s*=\s*['\"]([^'\"]*)['\"]", html)
+    source_suffix = suffix_match.group(1) if suffix_match else ""
+    endpoint_match = re.search(r"get-stream-key/['\"]\s*\+\s*encodeURIComponent\(\s*['\"]([^'\"]+)['\"]", html)
+    if not endpoint_match:
+        endpoint_match = re.search(r"get-stream-key/([A-Za-z0-9._~-]+)", html)
+    stream_key = endpoint_match.group(1) if endpoint_match else variant
+    if not endpoint_match and quality and variant.endswith(quality+source_suffix):
+        stream_key = variant[:-len(quality+source_suffix)]
+    try:
+        data = await network.json(urljoin(page_url, "/get-stream-key/"+quote(stream_key, safe="")),
+                                  headers={"Referer": page_url})
+    except (FetchError, ValueError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    if data.get("is_external"):
+        external = data.get("external_url")
+        if not isinstance(external, str):
+            return None
+        try:
+            url = web_url(urljoin(page_url, external))
+        except ValueError:
+            return None
+        kind = stream_kind(url)
+        if kind == "page":
+            return None
+        return Stream(url, "Stream esterno", kind, page_url)
+    server = str(data.get("server_name") or "origin").casefold()
+    prefix = "/live-externalcdn" if server == "externalcdn" else "/live-cdn" if server != "origin" else "/live"
+    url = urljoin(page_url, f"{prefix}/{quote(variant, safe='')}/index.m3u8")
+    tokens = {}
+    token_match = re.search(r"const\s+_0x\s*=\s*(\{.*?\});", html, re.DOTALL)
+    if token_match:
+        try:
+            tokens = json.loads(token_match.group(1))
+        except ValueError:
+            tokens = {}
+    token = tokens.get(quality) if isinstance(tokens, dict) else None
+    if isinstance(token, dict):
+        params = {key: token[key] for key in ("_t", "_e", "_n") if isinstance(token.get(key), (str, int, float))}
+        if params:
+            url += "?"+urlencode(sorted(params.items()))
+    try:
+        playlist, _ = await network.get(url, headers={"Referer": page_url}, limit=512_000)
+    except (FetchError, ValueError):
+        return None
+    if not playlist.lstrip().startswith("#EXTM3U"):
+        return None
+    return Stream(url, "HLS StreamFree", "hls", page_url)
 
 
 def page_streams(html: str, page_url: str) -> tuple[list[Stream], list[str]]:
@@ -106,7 +167,10 @@ async def resolve_page(network, stream: Stream, *, max_pages: int = 8, candidate
                     continue
                 media, frames = page_streams(html, final_url)
                 result.update((item.url, item) for item in media)
-                if depth < 2 and not media:
+                special = await streamfree_url(network, final_url, html)
+                if special:
+                    result[special.url] = special
+                if depth < 2 and not media and not special:
                     queue.extend((url, depth+1) for url in frames if url not in seen)
     except TimeoutError:
         # Return streams found before the deadline instead of losing the whole resolution.
